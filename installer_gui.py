@@ -1,0 +1,1020 @@
+# GNU General Public License v3.0 or later (GPL-3.0-or-later)
+#
+# Copyright (c) 2026 [Facu Falcone](a.facundo.falcone@gmail.com) All rights reserved.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+Instalador Gráfico Todo-en-Uno para el Lenguaje YAGUARETÉ y la Extensión de VS Code.
+Permite instalar el binario 'yaguarete.exe' en el sistema, añadirlo al PATH,
+asociar la extensión .yaguarete e instalar el plugin en Visual Studio Code.
+"""
+
+import os
+import sys
+import shutil
+import subprocess
+import threading
+import time
+import json
+import winreg
+import ctypes
+from ctypes import wintypes
+import tkinter as tk
+from tkinter import ttk, messagebox
+from tkinter.scrolledtext import ScrolledText
+
+# Versión oficial del instalador y del lenguaje YAGUARETÉ
+APP_VERSION = "0.1.1"
+APP_VERSION_FULL = "0.1.1"
+
+# ============================================================================
+# Paleta Visual Oficial YAGUARETÉ 2.X (Dark Electric Blue & Jaguar Gamer)
+# ============================================================================
+COLOR_BG_BASE = "#080c14"          # Fondo base profundo (azul noche espacial)
+COLOR_PANEL_BG = "#0f172a"         # Superficies y paneles de cabecera / pie
+COLOR_PANEL_ALT = "#131f37"        # Paneles alternativos
+COLOR_BORDER = "#1e3a8a"           # Bordes sutiles azul profundo
+COLOR_BORDER_ACCENT = "#2563eb"    # Bordes destacados
+COLOR_PRIMARY = "#0066ff"          # Acento Primario: Azul eléctrico YAGUARETÉ
+COLOR_PRIMARY_HOVER = "#0052cc"    # Hover botón principal
+COLOR_PRIMARY_ACTIVE = "#0084ff"   # Active / Focus botón principal
+COLOR_CYAN_NEON = "#00d4ff"        # Acento Secundario: Cyan Neón / Glow
+COLOR_CYAN_SOFT = "#38bdf8"        # Cyan suave (subtítulos, status)
+COLOR_BADGE_BG = "#0f2b5c"         # Fondo cápsula insignia autoría
+COLOR_BADGE_FG = "#7dd3fc"         # Texto cápsula insignia autoría
+COLOR_BADGE_BORDER = "#0284c7"     # Borde cápsula insignia autoría
+COLOR_VER_BADGE_BG = "#1e3a8a"     # Fondo badge de versión
+COLOR_VER_BADGE_FG = "#e0f2fe"     # Texto badge de versión
+COLOR_VER_BADGE_BORDER = "#38bdf8" # Borde badge de versión
+COLOR_CONSOLE_BG = "#05080f"       # Fondo consola de logs
+COLOR_CONSOLE_FG = "#bae6fd"       # Texto consola de logs
+COLOR_CONSOLE_CURSOR = "#00d4ff"   # Cursor consola de logs
+COLOR_TEXT_MAIN = "#ffffff"        # Texto blanco puro
+COLOR_TEXT_MUTED = "#94a3b8"       # Texto secundario / atenuado
+COLOR_CHK_FG = "#e0f2fe"           # Texto opciones checkbutton
+COLOR_CHK_SELECT = "#0e1726"       # Fondo selección checkbutton
+COLOR_BTN_SEC_BG = "#1e293b"       # Botón secundario (cerrar)
+COLOR_BTN_SEC_FG = "#e2e8f0"       # Texto botón secundario
+COLOR_BTN_SEC_HOVER = "#334155"    # Hover botón secundario
+COLOR_DANGER_BG = "#991b1b"        # Botón desinstalar
+COLOR_DANGER_FG = "#ffffff"        # Texto botón desinstalar
+COLOR_DANGER_HOVER = "#b91c1c"     # Hover botón desinstalar
+
+
+def setup_console():
+    """Si fue invocado desde una terminal, se acopla a la consola existente para mostrar salida."""
+    try:
+        if ctypes.windll.kernel32.AttachConsole(0xFFFFFFFF):
+            sys.stdout = open("CONOUT$", "w", encoding="utf-8", errors="replace")
+            sys.stderr = open("CONOUT$", "w", encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+
+def enable_high_dpi():
+    """Habilita escalado nítido para monitores de alta densidad (High-DPI) en Windows."""
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
+
+def safe_print(msg: str):
+    """Imprime en consola si está disponible de forma segura."""
+    try:
+        if sys.stdout:
+            print(msg)
+            sys.stdout.flush()
+    except Exception:
+        pass
+
+
+def broadcast_environment_change():
+    """Notifica a Windows y a las aplicaciones abiertas que el PATH del sistema cambió."""
+    try:
+        HWND_BROADCAST = 0xFFFF
+        WM_SETTINGCHANGE = 0x001A
+        SMTO_ABORTIFHUNG = 0x0002
+        result = wintypes.DWORD()
+        ctypes.windll.user32.SendMessageTimeoutW(
+            HWND_BROADCAST,
+            WM_SETTINGCHANGE,
+            0,
+            "Environment",
+            SMTO_ABORTIFHUNG,
+            3000,
+            ctypes.byref(result)
+        )
+    except Exception:
+        pass
+
+
+def get_resource_path(relative_path: str) -> str:
+    """Resuelve la ruta de un recurso tanto en modo desarrollo como empaquetado en PyInstaller."""
+    # 1. Si está empaquetado en PyInstaller (_MEIPASS)
+    if hasattr(sys, "_MEIPASS"):
+        candidates_meipass = [
+            os.path.join(sys._MEIPASS, relative_path),
+            os.path.join(sys._MEIPASS, "payload", relative_path),
+            os.path.join(sys._MEIPASS, "payload", os.path.basename(relative_path))
+        ]
+        for c in candidates_meipass:
+            if os.path.exists(c):
+                return c
+
+    # 2. Si se ejecuta directamente desde el código fuente
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(base_dir, relative_path),
+        os.path.join(base_dir, "payload", relative_path),
+        os.path.join(base_dir, "payload", os.path.basename(relative_path)),
+        os.path.join(base_dir, "dist", relative_path),
+        os.path.join(base_dir, "extension-vscode", relative_path)
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+
+    return os.path.join(base_dir, relative_path)
+
+
+def terminate_running_cli_processes():
+    """Termina cualquier proceso residual de yaguarete.exe para liberar bloqueos en Windows."""
+    if sys.platform == "win32":
+        try:
+            subprocess.run(["taskkill", "/F", "/IM", "yaguarete.exe", "/T"], capture_output=True)
+            time.sleep(0.2)
+        except Exception:
+            pass
+
+
+def safe_copy_executable(src: str, dst: str, log_fn=None):
+    """Copia el binario yaguarete.exe protegiéndose contra bloqueos de procesos en ejecución (Error 32)."""
+    # 1. Intentar copia directa
+    try:
+        shutil.copy2(src, dst)
+        return
+    except PermissionError as e:
+        if log_fn:
+            log_fn(f" - [AVISO] yaguarete.exe bloqueado ({e}). Liberando procesos...")
+
+    # 2. Cerrar procesos activos de yaguarete.exe
+    terminate_running_cli_processes()
+
+    # 3. Reintentar copia
+    for attempt in range(1, 4):
+        try:
+            shutil.copy2(src, dst)
+            if log_fn:
+                log_fn(f" - yaguarete.exe actualizado exitosamente (intento {attempt}).")
+            return
+        except PermissionError:
+            time.sleep(0.15 * attempt)
+
+    # 4. Reemplazo atómico en Windows (renombrar el binario en uso y escribir el nuevo)
+    if os.path.exists(dst):
+        old_dst = f"{dst}.old_{int(time.time())}.exe"
+        try:
+            os.replace(dst, old_dst)
+            shutil.copy2(src, dst)
+            try:
+                os.remove(old_dst)
+            except Exception:
+                pass
+            return
+        except Exception as e:
+            raise PermissionError(f"Error escribiendo yaguarete.exe: {e}")
+
+
+def add_to_user_path(directory: str) -> bool:
+    """Añade un directorio a la variable de entorno PATH del usuario en el Registro de Windows."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_READ | winreg.KEY_SET_VALUE) as key:
+            try:
+                current_path, reg_type = winreg.QueryValueEx(key, "Path")
+            except FileNotFoundError:
+                current_path, reg_type = "", winreg.REG_EXPAND_SZ
+
+            parts = [p.strip() for p in current_path.split(";") if p.strip()]
+            norm_target = os.path.normpath(directory).lower()
+
+            if not any(os.path.normpath(p).lower() == norm_target for p in parts):
+                parts.append(directory)
+                new_path = ";".join(parts)
+                winreg.SetValueEx(key, "Path", 0, reg_type, new_path)
+                broadcast_environment_change()
+                return True
+            return False
+    except Exception as e:
+        print(f"Error modificando PATH: {e}")
+        return False
+
+
+def remove_from_user_path(directory: str) -> bool:
+    """Elimina un directorio de la variable PATH del usuario."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_READ | winreg.KEY_SET_VALUE) as key:
+            try:
+                current_path, reg_type = winreg.QueryValueEx(key, "Path")
+            except FileNotFoundError:
+                return False
+
+            parts = [p.strip() for p in current_path.split(";") if p.strip()]
+            norm_target = os.path.normpath(directory).lower()
+            filtered = [p for p in parts if os.path.normpath(p).lower() != norm_target]
+
+            if len(filtered) != len(parts):
+                new_path = ";".join(filtered)
+                winreg.SetValueEx(key, "Path", 0, reg_type, new_path)
+                broadcast_environment_change()
+                return True
+            return False
+    except Exception as e:
+        print(f"Error quitando de PATH: {e}")
+        return False
+
+
+def refresh_shell_icons():
+    """Notifica al Explorador de Windows que cambiaron las asociaciones (refresca iconos)."""
+    try:
+        SHCNE_ASSOCCHANGED = 0x08000000
+        SHCNF_IDLIST = 0x0000
+        ctypes.windll.shell32.SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None)
+    except Exception:
+        pass
+
+
+def associate_file_extension(yaguarete_exe: str, icon_path: str = None):
+    """Asocia la extensión .yaguarete con yaguarete.exe e icono oficial en el Registro de Windows del usuario."""
+    try:
+        base = winreg.HKEY_CURRENT_USER
+        with winreg.CreateKey(base, r"Software\Classes\.yaguarete") as key:
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "YaguareteFile")
+            winreg.SetValueEx(key, "Content Type", 0, winreg.REG_SZ, "text/x-yaguarete")
+            winreg.SetValueEx(key, "PerceivedType", 0, winreg.REG_SZ, "text")
+
+        icon_val = f'"{icon_path}"' if icon_path and os.path.exists(icon_path) else f'"{yaguarete_exe}",0'
+        with winreg.CreateKey(base, r"Software\Classes\.yaguarete\DefaultIcon") as key:
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, icon_val)
+
+        for prog in ["YaguareteFile", "Yaguarete.Program"]:
+            prog_path = rf"Software\Classes\{prog}"
+            with winreg.CreateKey(base, prog_path) as key:
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "Código Fuente YAGUARETÉ")
+            with winreg.CreateKey(base, rf"{prog_path}\DefaultIcon") as key:
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, icon_val)
+            with winreg.CreateKey(base, rf"{prog_path}\shell\open\command") as key:
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'cmd.exe /k ""{yaguarete_exe}" run "%1""')
+
+        fe_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.yaguarete\OpenWithProgids"
+        with winreg.CreateKey(base, fe_path) as key:
+            winreg.SetValueEx(key, "YaguareteFile", 0, winreg.REG_NONE, b"")
+            winreg.SetValueEx(key, "Yaguarete.Program", 0, winreg.REG_NONE, b"")
+
+        refresh_shell_icons()
+        return True
+    except Exception as e:
+        print(f"Error asociando archivos: {e}")
+        return False
+
+
+def remove_file_association():
+    """Elimina las asociaciones de archivos .yaguarete."""
+    keys_to_delete = [
+        r"Software\Classes\Yaguarete.Program\shell\open\command",
+        r"Software\Classes\Yaguarete.Program\shell\open",
+        r"Software\Classes\Yaguarete.Program\shell",
+        r"Software\Classes\Yaguarete.Program\DefaultIcon",
+        r"Software\Classes\Yaguarete.Program",
+        r"Software\Classes\.yaguarete"
+    ]
+    for sub in keys_to_delete:
+        try:
+            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, sub)
+        except OSError:
+            pass
+
+
+def find_code_cli():
+    """Localiza el comando de CLI de Visual Studio Code ('code' o 'code.cmd')."""
+    which_code = shutil.which("code.cmd") or shutil.which("code")
+    if which_code:
+        return which_code
+
+    candidates = [
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\Microsoft VS Code\bin\code.cmd"),
+        os.path.expandvars(r"%PROGRAMFILES%\Microsoft VS Code\bin\code.cmd"),
+        os.path.expandvars(r"%PROGRAMFILES(X86)%\Microsoft VS Code\bin\code.cmd"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return None
+
+
+class InstallerApp:
+    def __init__(self, root: tk.Tk):
+        self.root = root
+        self.root.title(f"Instalador YAGUARETÉ v{APP_VERSION} & Extensión VS Code")
+
+        # Dimensiones optimizadas para visualización completa y High-DPI en Windows
+        window_width = 880
+        window_height = 640
+        self.root.minsize(840, 600)
+        self.root.configure(bg=COLOR_BG_BASE)
+
+        # Centrar la ventana dinámicamente en la pantalla del usuario
+        try:
+            self.root.update_idletasks()
+            screen_w = self.root.winfo_screenwidth()
+            screen_h = self.root.winfo_screenheight()
+            pos_x = max(0, (screen_w - window_width) // 2)
+            pos_y = max(0, (screen_h - window_height) // 2)
+            self.root.geometry(f"{window_width}x{window_height}+{pos_x}+{pos_y}")
+        except Exception:
+            self.root.geometry(f"{window_width}x{window_height}")
+
+        # Cargar icono de la aplicación
+        ico_file = get_resource_path("yaguarete_icon.ico")
+        if os.path.exists(ico_file):
+            try:
+                self.root.iconbitmap(ico_file)
+            except Exception:
+                pass
+
+        # Variables de estado
+        self.opt_install_cli = tk.BooleanVar(value=True)
+        self.opt_add_path = tk.BooleanVar(value=True)
+        self.opt_install_vscode = tk.BooleanVar(value=True)
+        self.opt_associate_ext = tk.BooleanVar(value=True)
+
+        self._build_ui()
+
+    def _build_ui(self):
+        # 1. Cabecera visual con logo institucional e información (TOP)
+        header_frame = tk.Frame(self.root, bg=COLOR_PANEL_BG, padx=20, pady=16)
+        header_frame.pack(side=tk.TOP, fill=tk.X)
+
+        self.logo_img = None
+        logo_path = get_resource_path("yaguarete_logo_header.png")
+        if not os.path.exists(logo_path):
+            logo_path = get_resource_path("yaguarete_icon.png")
+
+        if os.path.exists(logo_path):
+            try:
+                self.logo_img = tk.PhotoImage(file=logo_path)
+                logo_lbl = tk.Label(header_frame, image=self.logo_img, bg=COLOR_PANEL_BG)
+                logo_lbl.pack(side=tk.LEFT, padx=(0, 16))
+            except Exception:
+                pass
+
+        # Badge de autor estilizado en la esquina superior derecha (Cápsula Azul/Cyan)
+        author_badge = tk.Frame(
+            header_frame,
+            bg=COLOR_BADGE_BG,
+            padx=14,
+            pady=6,
+            highlightbackground=COLOR_BADGE_BORDER,
+            highlightthickness=1
+        )
+        author_badge.pack(side=tk.RIGHT, padx=(10, 0), anchor="center")
+
+        author_lbl = tk.Label(
+            author_badge,
+            text="Autor: <Facu Falcone>",
+            font=("Segoe UI", 9, "bold"),
+            fg=COLOR_BADGE_FG,
+            bg=COLOR_BADGE_BG
+        )
+        author_lbl.pack()
+
+        text_frame = tk.Frame(header_frame, bg=COLOR_PANEL_BG)
+        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Fila de título principal con badge de versión
+        title_row = tk.Frame(text_frame, bg=COLOR_PANEL_BG)
+        title_row.pack(anchor="w", fill=tk.X)
+
+        title_lbl = tk.Label(
+            title_row,
+            text="YAGUARETÉ",
+            font=("Segoe UI", 20, "bold"),
+            fg=COLOR_TEXT_MAIN,
+            bg=COLOR_PANEL_BG,
+            anchor="w",
+            justify=tk.LEFT
+        )
+        title_lbl.pack(side=tk.LEFT)
+
+        ver_badge = tk.Frame(
+            title_row,
+            bg=COLOR_VER_BADGE_BG,
+            padx=8,
+            pady=2,
+            highlightbackground=COLOR_VER_BADGE_BORDER,
+            highlightthickness=1
+        )
+        ver_badge.pack(side=tk.LEFT, padx=(12, 0), pady=(3, 0))
+
+        ver_lbl = tk.Label(
+            ver_badge,
+            text=f"v{APP_VERSION}",
+            font=("Segoe UI", 10, "bold"),
+            fg=COLOR_VER_BADGE_FG,
+            bg=COLOR_VER_BADGE_BG
+        )
+        ver_lbl.pack()
+
+        subtitle_lbl = tk.Label(
+            text_frame,
+            text=f"Instalador del Lenguaje (v{APP_VERSION}) & Extensión para Visual Studio Code",
+            font=("Segoe UI", 10),
+            fg=COLOR_CYAN_NEON,
+            bg=COLOR_PANEL_BG,
+            anchor="w",
+            justify=tk.LEFT
+        )
+        subtitle_lbl.pack(anchor="w", fill=tk.X, pady=(2, 0))
+
+        # 2. Pie de página con botones (BOTTOM)
+        # REGLA CRÍTICA: Se empaqueta en BOTTOM ANTES del cuerpo para garantizar que nunca sea ocultado o recortado
+        footer_frame = tk.Frame(self.root, bg=COLOR_PANEL_BG, padx=20, pady=12)
+        footer_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.status_lbl = tk.Label(
+            footer_frame,
+            text="Listo para instalar.",
+            font=("Segoe UI", 9),
+            fg=COLOR_CYAN_SOFT,
+            bg=COLOR_PANEL_BG
+        )
+        self.status_lbl.pack(side=tk.LEFT)
+
+        self.btn_exit = tk.Button(
+            footer_frame,
+            text="Cerrar",
+            command=self.root.quit,
+            font=("Segoe UI", 9),
+            bg=COLOR_BTN_SEC_BG,
+            fg=COLOR_BTN_SEC_FG,
+            activebackground=COLOR_BTN_SEC_HOVER,
+            activeforeground="#ffffff",
+            relief=tk.FLAT,
+            padx=14,
+            pady=5,
+            cursor="hand2"
+        )
+        self.btn_exit.pack(side=tk.RIGHT, padx=(8, 0))
+
+        self.btn_uninstall = tk.Button(
+            footer_frame,
+            text="Desinstalar",
+            command=self.start_uninstall,
+            font=("Segoe UI", 9),
+            bg=COLOR_DANGER_BG,
+            fg=COLOR_DANGER_FG,
+            activebackground=COLOR_DANGER_HOVER,
+            activeforeground="#ffffff",
+            relief=tk.FLAT,
+            padx=14,
+            pady=5,
+            cursor="hand2"
+        )
+        self.btn_uninstall.pack(side=tk.RIGHT, padx=(8, 0))
+
+        self.btn_install = tk.Button(
+            footer_frame,
+            text="Instalar Ahora",
+            command=self.start_install,
+            font=("Segoe UI", 10, "bold"),
+            bg=COLOR_PRIMARY,
+            fg="#ffffff",
+            activebackground=COLOR_PRIMARY_ACTIVE,
+            activeforeground="#ffffff",
+            relief=tk.FLAT,
+            padx=20,
+            pady=5,
+            cursor="hand2"
+        )
+        self.btn_install.pack(side=tk.RIGHT)
+
+        # Efectos hover interactivos en botones (Azul Eléctrico & Cyber Gaming)
+        self.btn_install.bind("<Enter>", lambda e: self.btn_install.config(bg=COLOR_PRIMARY_HOVER) if str(self.btn_install["state"]) != str(tk.DISABLED) else None)
+        self.btn_install.bind("<Leave>", lambda e: self.btn_install.config(bg=COLOR_PRIMARY) if str(self.btn_install["state"]) != str(tk.DISABLED) else None)
+
+        self.btn_uninstall.bind("<Enter>", lambda e: self.btn_uninstall.config(bg=COLOR_DANGER_HOVER) if str(self.btn_uninstall["state"]) != str(tk.DISABLED) else None)
+        self.btn_uninstall.bind("<Leave>", lambda e: self.btn_uninstall.config(bg=COLOR_DANGER_BG) if str(self.btn_uninstall["state"]) != str(tk.DISABLED) else None)
+
+        self.btn_exit.bind("<Enter>", lambda e: self.btn_exit.config(bg=COLOR_BTN_SEC_HOVER))
+        self.btn_exit.bind("<Leave>", lambda e: self.btn_exit.config(bg=COLOR_BTN_SEC_BG))
+
+        # 3. Contenido principal (CENTER)
+        # Se expande en todo el espacio disponible restante entre la cabecera y el pie de página
+        body_frame = tk.Frame(self.root, bg=COLOR_BG_BASE, padx=20, pady=12)
+        body_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # Opciones de instalación
+        opts_label = tk.Label(
+            body_frame,
+            text="Componentes y Tareas de Instalación:",
+            font=("Segoe UI", 11, "bold"),
+            fg="#f0f9ff",
+            bg=COLOR_BG_BASE
+        )
+        opts_label.pack(anchor="w", pady=(0, 8))
+
+        chk_style = {
+            "bg": COLOR_BG_BASE,
+            "fg": COLOR_CHK_FG,
+            "activebackground": COLOR_BG_BASE,
+            "activeforeground": COLOR_CYAN_SOFT,
+            "selectcolor": COLOR_CHK_SELECT,
+            "font": ("Segoe UI", 9)
+        }
+
+        self.chk1 = tk.Checkbutton(
+            body_frame,
+            text="Instalar ejecutable nativo 'yaguarete.exe' en %LOCALAPPDATA%\\Programs\\Yaguarete\\bin",
+            variable=self.opt_install_cli,
+            **chk_style
+        )
+        self.chk1.pack(anchor="w", pady=2)
+
+        self.chk2 = tk.Checkbutton(
+            body_frame,
+            text="Agregar YAGUARETÉ a la variable de entorno PATH (usar 'yaguarete' desde cualquier terminal)",
+            variable=self.opt_add_path,
+            **chk_style
+        )
+        self.chk2.pack(anchor="w", pady=2)
+
+        self.chk3 = tk.Checkbutton(
+            body_frame,
+            text=f"Instalar extensión de YAGUARETÉ en Visual Studio Code y Antigravity (v{APP_VERSION_FULL} - coloreado, linter, estructuras y ejecución)",
+            variable=self.opt_install_vscode,
+            **chk_style
+        )
+        self.chk3.pack(anchor="w", pady=2)
+
+        self.chk4 = tk.Checkbutton(
+            body_frame,
+            text="Asociar archivos .yaguarete en Windows (icono oficial de YAGUARETÉ y comando 'Abrir/Ejecutar')",
+            variable=self.opt_associate_ext,
+            **chk_style
+        )
+        self.chk4.pack(anchor="w", pady=2)
+
+        # Barra de progreso
+        style = ttk.Style()
+        style.theme_use('default')
+        style.configure("YAGUARETE.Horizontal.TProgressbar", troughcolor=COLOR_PANEL_BG, background=COLOR_PRIMARY)
+
+        self.progress = ttk.Progressbar(body_frame, orient="horizontal", mode="determinate", style="YAGUARETE.Horizontal.TProgressbar")
+        self.progress.pack(fill=tk.X, pady=(14, 8))
+
+        # Consola de registro / Logs
+        log_label = tk.Label(
+            body_frame,
+            text="Registro de eventos:",
+            font=("Segoe UI", 9, "bold"),
+            fg=COLOR_CYAN_SOFT,
+            bg=COLOR_BG_BASE
+        )
+        log_label.pack(anchor="w", pady=(0, 4))
+
+        self.log_text = ScrolledText(
+            body_frame,
+            height=8,
+            bg=COLOR_CONSOLE_BG,
+            fg=COLOR_CONSOLE_FG,
+            insertbackground=COLOR_CONSOLE_CURSOR,
+            font=("Consolas", 9),
+            relief=tk.FLAT,
+            padx=8,
+            pady=8
+        )
+        self.log_text.pack(fill=tk.BOTH, expand=True)
+
+        self.log(f"Asistente de instalación de YAGUARETÉ v{APP_VERSION} iniciado | Autor: <Facu Falcone>")
+        self.log("Seleccione las opciones deseadas y presione 'Instalar Ahora'.")
+
+    def log(self, message: str):
+        """Escribe un mensaje en el área de logs de forma segura para hilos."""
+        def _append():
+            self.log_text.insert(tk.END, f"[{time.strftime('%H:%M:%S')}] {message}\n")
+            self.log_text.see(tk.END)
+        self.root.after(0, _append)
+
+    def set_status(self, text: str, fg: str = COLOR_CYAN_SOFT):
+        def _update():
+            self.status_lbl.config(text=text, fg=fg)
+        self.root.after(0, _update)
+
+    def set_progress(self, value: int):
+        def _update():
+            self.progress["value"] = value
+        self.root.after(0, _update)
+
+    def set_controls_enabled(self, enabled: bool):
+        state = tk.NORMAL if enabled else tk.DISABLED
+        def _update():
+            self.btn_install.config(state=state)
+            self.btn_uninstall.config(state=state)
+            self.chk1.config(state=state)
+            self.chk2.config(state=state)
+            self.chk3.config(state=state)
+            self.chk4.config(state=state)
+        self.root.after(0, _update)
+
+    def start_install(self):
+        self.set_controls_enabled(False)
+        self.set_progress(0)
+        self.set_status("Iniciando instalación...")
+        threading.Thread(target=self._run_installation, daemon=True).start()
+
+    def start_uninstall(self):
+        confirm = messagebox.askyesno(
+            "Confirmar desinstalación",
+            "¿Desea desinstalar YAGUARETÉ, remover el comando del PATH y retirar la extensión de VS Code?"
+        )
+        if not confirm:
+            return
+        self.set_controls_enabled(False)
+        self.set_progress(0)
+        self.set_status("Desinstalando...")
+        threading.Thread(target=self._run_uninstallation, daemon=True).start()
+
+    def _run_installation(self):
+        try:
+            self.set_progress(10)
+            install_dir = os.path.expandvars(r"%LOCALAPPDATA%\Programs\Yaguarete\bin")
+            yaguarete_target_exe = os.path.join(install_dir, "yaguarete.exe")
+
+            # 1. Instalar CLI
+            if self.opt_install_cli.get():
+                self.log(f"[1/4] Instalando ejecutable nativo en: {install_dir}")
+                src_exe = get_resource_path("yaguarete.exe")
+                if not os.path.exists(src_exe):
+                    # Intentar en subcarpetas dist / payload
+                    src_exe = get_resource_path(os.path.join("dist", "yaguarete.exe"))
+
+                if not os.path.exists(src_exe):
+                    raise FileNotFoundError(f"No se encontró el archivo 'yaguarete.exe' en el paquete ({src_exe}).")
+
+                os.makedirs(install_dir, exist_ok=True)
+                safe_copy_executable(src_exe, yaguarete_target_exe, log_fn=self.log)
+                self.log(" - yaguarete.exe copiado exitosamente.")
+            self.set_progress(35)
+
+            # 2. Agregar a PATH
+            if self.opt_add_path.get():
+                self.log("[2/4] Configurando variable de entorno PATH del usuario...")
+                added = add_to_user_path(install_dir)
+                if added:
+                    self.log(" - Directorio agregado al PATH con éxito. (Notificación de sistema enviada).")
+                else:
+                    self.log(" - El directorio ya se encontraba registrado en el PATH.")
+            self.set_progress(55)
+
+            # 3. Asociar extensión de archivo .yaguarete
+            if self.opt_associate_ext.get():
+                self.log("[3/4] Registrando extensión de archivo .yaguarete en Windows con icono personalizado...")
+                src_ico = get_resource_path("yaguarete_icon.ico")
+                target_ico = os.path.join(install_dir, "yaguarete_icon.ico")
+                if os.path.exists(src_ico):
+                    try:
+                        shutil.copy2(src_ico, target_ico)
+                    except Exception:
+                        pass
+
+                if os.path.exists(yaguarete_target_exe):
+                    associate_file_extension(yaguarete_target_exe, target_ico if os.path.exists(target_ico) else None)
+                    self.log(" - Asociación completada con icono asignado a los archivos .yaguarete.")
+                else:
+                    self.log(" - Aviso: yaguarete.exe no encontrado para asociar archivos.")
+            self.set_progress(75)
+
+            # 4. Instalar extensión de VS Code
+            if self.opt_install_vscode.get():
+                self.log("[4/4] Instalando extensión en Visual Studio Code...")
+
+                # VSIX - Detección dinámica del paquete más reciente
+                vsix_candidate = None
+                search_dirs = [get_resource_path("."), get_resource_path("payload"), get_resource_path("extension-vscode")]
+                for s_dir in search_dirs:
+                    if os.path.exists(s_dir) and os.path.isdir(s_dir):
+                        candidates = [os.path.join(s_dir, f) for f in os.listdir(s_dir) if f.endswith(".vsix")]
+                        if candidates:
+                            vsix_candidate = sorted(candidates, key=os.path.getmtime, reverse=True)[0]
+                            break
+
+                code_cli = find_code_cli()
+                if code_cli and vsix_candidate and os.path.exists(vsix_candidate):
+                    self.log(f" - Detectado ejecutable de VS Code CLI: {code_cli}")
+                    try:
+                        res = subprocess.run(
+                            [code_cli, "--install-extension", vsix_candidate, "--force"],
+                            capture_output=True,
+                            text=True,
+                            shell=True
+                        )
+                        if res.returncode == 0:
+                            self.log(f" - Extensión ({os.path.basename(vsix_candidate)}) registrada mediante 'code --install-extension' correctamente.")
+                        else:
+                            self.log(f" - Aviso en VS Code CLI: {res.stdout.strip()} {res.stderr.strip()}")
+                    except Exception as e:
+                        self.log(f" - Aviso ejecutando code CLI: {e}")
+                else:
+                    self.log(" - VS Code CLI no encontrado en PATH; aplicando despliegue directo a disco...")
+
+                # Copia directa en carpetas de extensiones
+                ext_src = get_resource_path("extension-vscode")
+                if not os.path.exists(ext_src):
+                    ext_src = get_resource_path(os.path.join("payload", "extension-vscode"))
+
+                user_home = os.path.expanduser("~")
+                current_ext_folder = f"yaguarete.yaguarete-language-support-{APP_VERSION_FULL}"
+                ext_roots = [
+                    os.path.join(user_home, ".vscode", "extensions"),
+                    os.path.join(user_home, ".vscode-oss", "extensions"),
+                    os.path.join(user_home, ".cursor", "extensions"),
+                    os.path.join(user_home, ".antigravity-ide", "extensions"),
+                    os.path.join(user_home, ".antigravity", "extensions")
+                ]
+
+                for eroot in ext_roots:
+                    if os.path.exists(eroot) or os.path.exists(os.path.dirname(eroot)):
+                        os.makedirs(eroot, exist_ok=True)
+                        for item in os.listdir(eroot):
+                            if item.startswith("yaguarete.yaguarete-language-support-") and item != current_ext_folder:
+                                shutil.rmtree(os.path.join(eroot, item), ignore_errors=True)
+                            elif item == "yaguarete-language-support":
+                                shutil.rmtree(os.path.join(eroot, item), ignore_errors=True)
+
+                        obs_file = os.path.join(eroot, ".obsolete")
+                        if os.path.exists(obs_file):
+                            try:
+                                with open(obs_file, "r", encoding="utf-8") as f:
+                                    obs_data = json.load(f)
+                                obs_cleaned = {k: v for k, v in obs_data.items() if "yaguarete" not in k.lower()}
+                                with open(obs_file, "w", encoding="utf-8") as f:
+                                    json.dump(obs_cleaned, f, indent=2)
+                            except Exception:
+                                pass
+
+                        if os.path.exists(ext_src):
+                            t_dest = os.path.join(eroot, current_ext_folder)
+                            if os.path.exists(t_dest):
+                                shutil.rmtree(t_dest, ignore_errors=True)
+                            shutil.copytree(ext_src, t_dest, dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.vsix"))
+                            self.log(f" - Extensión desplegada en: {t_dest}")
+
+                            # Actualizar extensions.json
+                            ext_json_path = os.path.join(eroot, "extensions.json")
+                            if os.path.exists(ext_json_path):
+                                try:
+                                    with open(ext_json_path, "r", encoding="utf-8") as f:
+                                        ext_list = json.load(f)
+                                    if isinstance(ext_list, list):
+                                        ext_list = [x for x in ext_list if not (isinstance(x, dict) and x.get("identifier", {}).get("id") == "yaguarete.yaguarete-language-support")]
+                                        posix_p = "/" + t_dest.replace("\\", "/").lstrip("/")
+                                        ext_list.append({
+                                            "identifier": {"id": "yaguarete.yaguarete-language-support"},
+                                            "version": APP_VERSION_FULL,
+                                            "location": {
+                                                "$mid": 1,
+                                                "fsPath": t_dest,
+                                                "_sep": 1,
+                                                "external": f"file://{posix_p}",
+                                                "path": posix_p,
+                                                "scheme": "file"
+                                            },
+                                            "relativeLocation": current_ext_folder,
+                                            "metadata": {
+                                                "isApplicationScoped": False,
+                                                "isMachineScoped": False,
+                                                "isBuiltin": False,
+                                                "pinned": True,
+                                                "source": "vsix"
+                                            }
+                                        })
+                                        with open(ext_json_path, "w", encoding="utf-8") as f:
+                                            json.dump(ext_list, f, indent=2)
+                                except Exception:
+                                    pass
+
+            self.set_progress(100)
+            self.set_status("¡Instalación completada exitosamente!", fg=COLOR_CYAN_SOFT)
+            self.log("\n>>> ¡PROCESO FINALIZADO CON ÉXITO! <<<")
+            self.log("Puede abrir una nueva terminal y escribir: yaguarete run <archivo.yaguarete>")
+            self.log("O abrir cualquier archivo .yaguarete en VS Code para editarlo y ejecutarlo.")
+
+            self.root.after(200, lambda: messagebox.showinfo(
+                "Instalación Completada",
+                "¡YAGUARETÉ Pseudocódigo y la extensión para VS Code han sido instalados correctamente!\n\n"
+                "Para comenzar:\n"
+                "• Escribe 'yaguarete --help' en una nueva consola\n"
+                "• O abre tus archivos .yaguarete en Visual Studio Code"
+            ))
+
+        except Exception as e:
+            self.set_status(f"Error: {e}", fg="#f87171")
+            self.log(f"\n[ERROR CRÍTICO]: {e}")
+            self.root.after(200, lambda: messagebox.showerror("Error en la instalación", str(e)))
+
+        finally:
+            self.set_controls_enabled(True)
+
+    def _run_uninstallation(self):
+        try:
+            self.set_progress(20)
+            self.log("[1/3] Removiendo archivos del lenguaje...")
+            install_dir = os.path.expandvars(r"%LOCALAPPDATA%\Programs\Yaguarete\bin")
+            if os.path.exists(install_dir):
+                shutil.rmtree(os.path.dirname(install_dir), ignore_errors=True)
+                self.log(f" - Carpeta eliminada: {install_dir}")
+
+            self.set_progress(45)
+            self.log("[2/3] Quitando YAGUARETÉ de la variable de entorno PATH...")
+            removed = remove_from_user_path(install_dir)
+            if removed:
+                self.log(" - Variable PATH restaurada.")
+
+            self.log(" - Removiendo asociaciones de archivos .yaguarete...")
+            remove_file_association()
+
+            self.set_progress(70)
+            self.log("[3/3] Removiendo extensión de VS Code...")
+            user_home = os.path.expanduser("~")
+            ext_paths = [
+                os.path.join(user_home, ".vscode", "extensions", f"yaguarete.yaguarete-language-support-{APP_VERSION_FULL}"),
+                os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-2.0.3"),
+                os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.11.6"),
+                os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.3.0"),
+                os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.2.0"),
+                os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.1.0"),
+                os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.0.0"),
+                os.path.join(user_home, ".vscode", "extensions", "yaguarete-language-support"),
+                os.path.join(user_home, ".antigravity-ide", "extensions", "yaguarete-language-support")
+            ]
+            for ep in ext_paths:
+                if os.path.exists(ep):
+                    shutil.rmtree(ep, ignore_errors=True)
+                    self.log(f" - Eliminada extensión: {ep}")
+
+            code_cli = find_code_cli()
+            if code_cli:
+                try:
+                    subprocess.run([code_cli, "--uninstall-extension", "yaguarete.yaguarete-language-support"], capture_output=True, text=True, shell=True)
+                except Exception:
+                    pass
+
+            self.set_progress(100)
+            self.set_status("Desinstalación completada.", fg="#94a3b8")
+            self.log("\n>>> DESINSTALACIÓN COMPLETADA <<<")
+            self.root.after(200, lambda: messagebox.showinfo(
+                "Desinstalación",
+                "YAGUARETÉ y la extensión de VS Code han sido desinstalados de su equipo."
+            ))
+
+        except Exception as e:
+            self.set_status(f"Error: {e}", fg="#f87171")
+            self.log(f"[ERROR]: {e}")
+        finally:
+            self.set_controls_enabled(True)
+
+
+def run_cli_install():
+    """Ejecuta la instalación completa en modo consola desatendido (silencioso)."""
+    safe_print("==================================================")
+    safe_print(f"  INSTALACIÓN DESATENDIDA DE YAGUARETÉ v{APP_VERSION} & VS CODE     ")
+    safe_print("==================================================")
+    install_dir = os.path.expandvars(r"%LOCALAPPDATA%\Programs\Yaguarete\bin")
+    yaguarete_target_exe = os.path.join(install_dir, "yaguarete.exe")
+
+    # 1. Copiar CLI
+    safe_print(f"[1/4] Instalando ejecutable en: {install_dir}")
+    src_exe = get_resource_path("yaguarete.exe")
+    if not os.path.exists(src_exe):
+        src_exe = get_resource_path(os.path.join("payload", "yaguarete.exe"))
+    if not os.path.exists(src_exe):
+        src_exe = get_resource_path(os.path.join("dist", "yaguarete.exe"))
+
+    if not os.path.exists(src_exe):
+        safe_print(f"[ERROR] No se encontró el binario yaguarete.exe ({src_exe})")
+        sys.exit(1)
+
+    os.makedirs(install_dir, exist_ok=True)
+    safe_copy_executable(src_exe, yaguarete_target_exe, log_fn=safe_print)
+    safe_print(" [OK] yaguarete.exe instalado con éxito.")
+
+    # 2. Agregar a PATH
+    safe_print("[2/4] Registrando en variable PATH del usuario...")
+    added = add_to_user_path(install_dir)
+    if added:
+        safe_print(" [OK] PATH actualizado y notificado a Windows.")
+    else:
+        safe_print(" [OK] PATH ya estaba configurado.")
+
+    # 3. Asociar archivos
+    safe_print("[3/4] Asociando archivos .yaguarete en Windows con icono...")
+    src_ico = get_resource_path("yaguarete_icon.ico")
+    target_ico = os.path.join(install_dir, "yaguarete_icon.ico")
+    if os.path.exists(src_ico):
+        try:
+            shutil.copy2(src_ico, target_ico)
+        except Exception:
+            pass
+    associate_file_extension(yaguarete_target_exe, target_ico if os.path.exists(target_ico) else None)
+    safe_print(" [OK] Asociación de archivos .yaguarete registrada con icono.")
+
+    # 4. Extensión VS Code
+    safe_print("[4/4] Instalando extensión en Visual Studio Code...")
+    vsix_candidate = None
+    search_dirs = [get_resource_path("."), get_resource_path("payload"), get_resource_path("extension-vscode")]
+    for s_dir in search_dirs:
+        if os.path.exists(s_dir) and os.path.isdir(s_dir):
+            candidates = [os.path.join(s_dir, f) for f in os.listdir(s_dir) if f.endswith(".vsix")]
+            if candidates:
+                vsix_candidate = sorted(candidates, key=os.path.getmtime, reverse=True)[0]
+                break
+
+    code_cli = find_code_cli()
+    if code_cli and vsix_candidate and os.path.exists(vsix_candidate):
+        safe_print(f" [INFO] Ejecutando: {code_cli} --install-extension {os.path.basename(vsix_candidate)}...")
+        try:
+            res = subprocess.run([code_cli, "--install-extension", vsix_candidate, "--force"], capture_output=True, text=True, shell=True)
+            safe_print(" [OK] Registrado en VS Code CLI.")
+        except Exception as e:
+            safe_print(f" [AVISO] {e}")
+
+    ext_src = get_resource_path("extension-vscode")
+    if not os.path.exists(ext_src):
+        ext_src = get_resource_path(os.path.join("payload", "extension-vscode"))
+
+    user_home = os.path.expanduser("~")
+    for old_dir in [
+        os.path.join(user_home, ".vscode", "extensions", f"yaguarete.yaguarete-language-support-{APP_VERSION_FULL}"),
+        os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-2.0.3"),
+        os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.11.6"),
+        os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.3.0"),
+        os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.2.0"),
+        os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.1.0"),
+        os.path.join(user_home, ".vscode", "extensions", "yaguarete.yaguarete-language-support-1.0.0"),
+        os.path.join(user_home, ".vscode", "extensions", "yaguarete-language-support"),
+    ]:
+        if os.path.exists(old_dir):
+            shutil.rmtree(old_dir, ignore_errors=True)
+
+    targets = [
+        os.path.join(user_home, ".vscode", "extensions", f"yaguarete.yaguarete-language-support-{APP_VERSION_FULL}"),
+        os.path.join(user_home, ".vscode", "extensions", "yaguarete-language-support"),
+        os.path.join(user_home, ".antigravity-ide", "extensions", "yaguarete-language-support")
+    ]
+    cursor_ext = os.path.join(user_home, ".cursor", "extensions")
+    if os.path.exists(cursor_ext):
+        targets.append(os.path.join(cursor_ext, f"yaguarete.yaguarete-language-support-{APP_VERSION_FULL}"))
+    if os.path.exists(ext_src):
+        for t in targets:
+            parent = os.path.dirname(t)
+            if not os.path.exists(parent):
+                os.makedirs(parent, exist_ok=True)
+            if os.path.exists(t):
+                shutil.rmtree(t, ignore_errors=True)
+            shutil.copytree(ext_src, t, dirs_exist_ok=True)
+            safe_print(f" [OK] Extensión desplegada en: {t}")
+
+    safe_print("\n==================================================")
+    safe_print(" [¡ÉXITO!] Instalación completada correctamente.")
+    safe_print("==================================================")
+
+
+def main():
+    setup_console()
+    if "--silent" in sys.argv or "--install" in sys.argv or "-s" in sys.argv:
+        run_cli_install()
+        return
+
+    enable_high_dpi()
+    root = tk.Tk()
+    app = InstallerApp(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()

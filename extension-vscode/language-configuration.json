@@ -1,0 +1,43 @@
+{
+  "comments": {
+    "lineComment": "//",
+    "blockComment": ["/*", "*/"]
+  },
+  "brackets": [
+    ["[", "]"],
+    ["(", ")"],
+    ["{", "}"]
+  ],
+  "autoClosingPairs": [
+    { "open": "[", "close": "]" },
+    { "open": "(", "close": ")" },
+    { "open": "{", "close": "}" },
+    { "open": "\"", "close": "\"", "notIn": ["string"] },
+    { "open": "'", "close": "'", "notIn": ["string", "comment"] },
+    { "open": "/*", "close": "*/", "notIn": ["string"] }
+  ],
+  "surroundingPairs": [
+    ["[", "]"],
+    ["(", ")"],
+    ["{", "}"],
+    ["\"", "\""],
+    ["'", "'"]
+  ],
+  "folding": {
+    "markers": {
+      "start": "^[ \\t]*([iI][nN][iI][cC][iI][oO]|[fF][uU][nN][cC][iI][oO][nN]|[pP][rR][oO][cC][eE][dD][iI][mM][iI][eE][nN][tT][oO]|[sS][iI]|[mM][iI][eE][nN][tT][rR][aA][sS]|[pP][aA][rR][aA]|[hH][aA][cC][eE][rR])\\b",
+      "end": "^[ \\t]*([fF][iI][nN]([ \\t]+([sS][iI]|[mM][iI][eE][nN][tT][rR][aA][sS]|[pP][aA][rR][aA]|[fF][uU][nN][cC][iI][oO][nN]|[pP][rR][oO][cC][eE][dD][iI][mM][iI][eE][nN][tT][oO]))?)\\b"
+    }
+  },
+  "indentationRules": {
+    "increaseIndentPattern": {
+      "pattern": "^\\s*(INICIO|FUNCION\\b.*|PROCEDIMIENTO\\b.*|SI\\b.*|SINO|SINO\\s+SI\\b.*|MIENTRAS\\b.*|PARA\\b.*|HACER)\\s*$",
+      "flags": "i"
+    },
+    "decreaseIndentPattern": {
+      "pattern": "^\\s*(FIN|FIN\\s+SI|FIN\\s+MIENTRAS|FIN\\s+PARA|FIN\\s+FUNCION|FIN\\s+PROCEDIMIENTO|SINO|SINO\\s+SI\\b.*)\\s*$",
+      "flags": "i"
+    }
+  },
+  "wordPattern": "(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>/\\?\\s]+)"
+}

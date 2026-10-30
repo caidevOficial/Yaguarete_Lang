@@ -1,0 +1,221 @@
+{
+  "name": "yaguarete-language-support",
+  "displayName": "YAGUARETÉ",
+  "description": "Soporte oficial para el lenguaje YAGUARETÉ (.yaguarete): nueva identidad visual Jaguar Gamer & Electric Blue, coloreado de sintaxis, diagnósticos instantáneos con motor nativo Rust, autocompletado y consola interactiva REPL.",
+  "version": "0.1.1",
+  "author": "Facu Falcone <a.facundo.falcone@gmail.com>",
+  "license": "GPL-3.0-or-later",
+  "icon": "icon.png",
+  "publisher": "yaguarete",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caidevOficial/Yaguarete_Lang"
+  },
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:yaguarete",
+    "workspaceContains:**/*.yaguarete",
+    "onStartupFinished",
+    "onDebugResolve:yaguarete"
+  ],
+  "contributes": {
+    "iconThemes": [
+      {
+        "id": "yaguarete-icons",
+        "label": "YAGUARETÉ",
+        "path": "./icons/yaguarete-icon-theme.json"
+      }
+    ],
+    "languages": [
+      {
+        "id": "yaguarete",
+        "aliases": [
+          "YAGUARETÉ",
+          "Yaguarete",
+          "yaguarete"
+        ],
+        "extensions": [
+          ".yaguarete"
+        ],
+        "filenamePatterns": [
+          "*.yaguarete",
+          "**/*.yaguarete"
+        ],
+        "mimetypes": [
+          "application/x-yaguarete",
+          "text/x-yaguarete"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/yaguarete-file.svg",
+          "dark": "./icons/yaguarete-file.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "yaguarete",
+        "scopeName": "source.yaguarete",
+        "path": "./syntaxes/yaguarete.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "yaguarete",
+        "path": "./snippets/snippets.json"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "yaguarete"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "yaguarete",
+        "label": "YAGUARETÉ",
+        "languages": [
+          "yaguarete"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Ruta del archivo .yaguarete a depurar.",
+                "default": "${file}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Detener en la primera sentencia ejecutable.",
+                "default": false
+              },
+              "lenient": {
+                "type": "boolean",
+                "description": "Modo permisivo para pseudocódigo informal.",
+                "default": false
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Directorio de trabajo (para rutas relativas de ARCHIVO).",
+                "default": "${workspaceFolder}"
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "yaguarete",
+            "request": "launch",
+            "name": "YAGUARETÉ: Depurar archivo actual",
+            "program": "${file}",
+            "stopOnEntry": false
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "YAGUARETÉ: Depurar archivo",
+            "description": "Configuración para depurar un archivo .yaguarete",
+            "body": {
+              "type": "yaguarete",
+              "request": "launch",
+              "name": "YAGUARETÉ: Depurar archivo actual",
+              "program": "${file}",
+              "stopOnEntry": false
+            }
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "yaguarete.runFile",
+        "title": "YAGUARETÉ: Ejecutar archivo actual",
+        "category": "YAGUARETÉ"
+      },
+      {
+        "command": "yaguarete.checkFile",
+        "title": "YAGUARETÉ: Verificar sintaxis y tipos del archivo",
+        "category": "YAGUARETÉ"
+      },
+      {
+        "command": "yaguarete.debugFile",
+        "title": "YAGUARETÉ: Depurar archivo actual",
+        "category": "YAGUARETÉ",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "yaguarete.startRepl",
+        "title": "YAGUARETÉ: Iniciar consola interactiva REPL",
+        "category": "YAGUARETÉ"
+      },
+      {
+        "command": "yaguarete.activateIcons",
+        "title": "YAGUARETÉ: Activar tema de iconos oficial de YAGUARETÉ",
+        "category": "YAGUARETÉ"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "yaguarete.runFile",
+          "when": "resourceExtname == .yaguarete",
+          "group": "navigation@1"
+        },
+        {
+          "command": "yaguarete.debugFile",
+          "when": "resourceExtname == .yaguarete",
+          "group": "navigation@2"
+        },
+        {
+          "command": "yaguarete.startRepl",
+          "when": "resourceExtname == .yaguarete",
+          "group": "navigation@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "yaguarete.runFile",
+          "when": "resourceExtname == .yaguarete",
+          "group": "1_modification@1"
+        },
+        {
+          "command": "yaguarete.checkFile",
+          "when": "resourceExtname == .yaguarete",
+          "group": "1_modification@2"
+        },
+        {
+          "command": "yaguarete.startRepl",
+          "when": "resourceExtname == .yaguarete",
+          "group": "1_modification@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "YAGUARETÉ Pseudocode",
+      "properties": {
+        "yaguarete.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Ruta al ejecutable 'yaguarete.exe' (detectado automáticamente si está instalado)."
+        },
+        "yaguarete.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Ruta al ejecutable de Python (por defecto usa 'python' en PATH o el intérprete configurado)."
+        }
+      }
+    }
+  }
+}

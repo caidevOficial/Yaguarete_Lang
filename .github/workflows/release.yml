@@ -1,0 +1,183 @@
+name: Build & Release YAGUARETÉ
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Compilar Artefactos de Windows y VSIX
+    runs-on: windows-latest
+
+    steps:
+      - name: Clonar Repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Configurar Node.js (para empaquetar VSIX)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
+
+      - name: Empaquetar Extensión de VS Code (VSIX)
+        working-directory: ./extension-vscode
+        run: |
+          npx -y @vscode/vsce package --no-git-tag-version
+
+      - name: Compilar yaguarete.exe e Instalador_Yaguarete.exe (Rust)
+        run: |
+          python build_installer.py
+
+      - name: Ejecutar Suite de Tests en Rust
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cargo test -p yaguarete_core -p yaguarete_cli -p yaguarete_installer
+
+      - name: Ejecutar Tests de Python Históricos
+        env:
+          YAGUARETE_NO_UPDATE_CHECK: "1"
+        run: |
+          python -m unittest discover -s tests -p "test_*.py"
+
+      - name: Subir Artefactos de Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            dist/Instalador_Yaguarete.exe
+            dist/yaguarete.exe
+            extension-vscode/*.vsix
+
+  build-linux:
+    name: Compilar Binario Nativo Rust ELF y Paquetes Linux (.deb y .tar.gz)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar Repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar Herramientas de Sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg binutils
+
+      - name: Ejecutar Suite de Tests en Rust en Linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cargo test -p yaguarete_core -p yaguarete_cli
+
+      - name: Ejecutar Tests de Python en Linux
+        env:
+          YAGUARETE_NO_UPDATE_CHECK: "1"
+        run: |
+          python -m unittest discover -s tests -p "test_*.py"
+
+      - name: Compilar Binario Nativo ELF yaguarete (Rust)
+        run: |
+          cargo build --release -p yaguarete_cli
+          mkdir -p dist
+          cp target/release/yaguarete dist/yaguarete
+          chmod +x dist/yaguarete
+
+      - name: Construir Paquetes Linux (.deb y .tar.gz)
+        run: |
+          python build_linux_package.py --binary dist/yaguarete
+
+      - name: Subir Artefactos de Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            dist/yaguarete
+            dist/*.deb
+            dist/*.tar.gz
+
+  publish-release:
+    name: Publicar Release Oficial Multiplataforma
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar Repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Descargar Artefactos de Windows
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifacts
+          path: windows-artifacts
+
+      - name: Descargar Artefactos de Linux
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts
+          path: linux-artifacts
+
+      - name: Consolidar Estructura de Artefactos
+        run: |
+          mkdir -p dist extension-vscode
+          find windows-artifacts -name "*.exe" -exec cp -v {} dist/ \;
+          find windows-artifacts -name "*.vsix" -exec cp -v {} extension-vscode/ \;
+          find linux-artifacts -name "yaguarete" -exec cp -v {} dist/ \;
+          find linux-artifacts -name "*.deb" -exec cp -v {} dist/ \;
+          find linux-artifacts -name "*.tar.gz" -exec cp -v {} dist/ \;
+          echo "=== Contenido de dist/ ==="
+          ls -la dist/
+          echo "=== Contenido de extension-vscode/ ==="
+          ls -la extension-vscode/
+
+      - name: Generar Notas de Release y Checksums SHA-256
+        run: |
+          python .github/scripts/generate_release_notes.py
+
+      - name: Publicar Release Oficial en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: YAGUARETÉ ${{ env.RELEASE_TAG }} - Instaladores Multiplataforma (Windows y Linux)
+          body_path: release_notes.md
+          files: |
+            dist/Instalador_Yaguarete.exe
+            dist/yaguarete.exe
+            dist/yaguarete
+            dist/*.deb
+            dist/*.tar.gz
+            extension-vscode/*.vsix
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

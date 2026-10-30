@@ -1,0 +1,317 @@
+# Registro de Cambios (Changelog) - YAGUARETÉ
+
+Todos los cambios notables en el lenguaje de programación y compilador **YAGUARETÉ** serán documentados en este archivo.
+El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
+
+---
+
+## [0.1.1] - 2026-10-30
+
+### 🐆 Primer Release Oficial de YAGUARETÉ: Identidad "Jaguar Gamer" & Electric Blue
+- **Transición desde el Prototipo UCABA hacia la Identidad Oficial `YAGUARETÉ` (`.yaguarete`):**
+  - Consolidación del lenguaje bajo la identidad oficial **YAGUARETÉ** (`v0.1.1`) como evolución directa a partir del prototipo inicial UCABA, adoptando la extensión obligatoria `.yaguarete`, el comando `yaguarete` y el paquete `yaguarete-language-support`.
+- **Nuevo Isotipo Oficial "Jaguar Gamer":**
+  - Implementación del nuevo isotipo oficial de YAGUARETÉ con diseño vectorial afilado estilo *esports* / *gaming*, proyectando velocidad, agilidad y alto rendimiento.
+  - Abandono definitivo del magenta institucional clásico en favor de una paleta cibernética de alto impacto: **Electric Blue & Cyber Cyan** (`#0066FF`, `#00D4FF`, `#38BDF8`).
+- **Modernización de Iconos de Windows y Assets de Alta Definición:**
+  - Nuevos binarios `.ico` multirresolución de alta definición (`yaguarete_icon.ico` y `yaguarete_icon_standard.ico`) con capas optimizadas para pantallas High-DPI desde 16x16 hasta 256x256 píxeles.
+  - Actualización del asset `yaguarete_logo_header.png` y cabeceras gráficas con la estética Jaguar Gamer Electric Blue.
+
+### 🖼️ Modernización del Instalador Gráfico (`installer_gui.py`)
+- **Interfaz Gráfica Renovada en Identidad YAGUARETÉ v0.1.1:**
+  - Rediseño completo de la interfaz visual del instalador gráfico en Python (`installer_gui.py`) y Rust (`crates/yaguarete_installer`).
+  - Adopción de la paleta Dark Electric Blue (`#080c14` de fondo base, `#0f172a` en paneles, `#0066ff` en acento primario y `#00d4ff` en detalles neón).
+  - Componentes estéticos modernizados: badges estilizadas para autoría y versión, botones redondeados de alta visibilidad con efectos hover fluidos, y consola de registro integrada con resaltado cyan neón.
+
+### 🧩 Actualización del Tema de Iconos y Extensión de VS Code
+- **Regeneración de Iconos SVG y PNG:**
+  - Regeneración completa de los iconos en `extension-vscode/icons/` (`yaguarete-file.svg`, `yaguarete-file.png`) adaptados al nuevo isotipo Jaguar Gamer con estética azul eléctrica.
+  - Actualización del tema de iconos `yaguarete-icon-theme.json` e icono oficial de la extensión (`extension-vscode/icon.png`).
+- **Empaquetado y Distribución VSIX v0.1.1:**
+  - Generación y empaquetado del nuevo archivo oficial `extension-vscode/yaguarete-language-support-0.1.1.vsix`.
+  - Actualización de metadatos, descripciones y configuración de empaquetado en `extension-vscode/package.json`.
+
+### ⚙️ Sincronización Integral de Versiones y Toolchain Rust
+- **Crates de Rust y Binarios Autónomos:**
+  - Sincronización rigurosa de versión `0.1.1` en `crates/yaguarete_core/Cargo.toml`, `crates/yaguarete_cli/Cargo.toml` y `crates/yaguarete_installer/Cargo.toml`.
+  - Actualización de la constante global `VERSION` a `0.1.1` en `crates/yaguarete_core/src/lib.rs`.
+  - Actualización de metadatos PE de Windows (FileVersion y ProductVersion a `0.1.1.0`) en `crates/yaguarete_cli/build.rs`, `crates/yaguarete_installer/build.rs`, `version_info_installer.txt` y `version_info_yaguarete.txt`.
+  - Actualización de tests de integración del CLI en `crates/yaguarete_cli/tests/test_cli.rs` para validar el nuevo banner `YAGUARETÉ (v0.1.1)`.
+  - Regeneración y validación de `Cargo.lock` para garantizar compilación y comprobación limpia en todo el workspace.
+- **Herramientas Auxiliares de Empaquetado:**
+  - Sincronización de versión `0.1.1` en scripts de empaquetado y distribución (`build_linux_package.py`, `install_extension.py`, `pseudocode/__init__.py`).
+
+## [2.0.3] - 2026-10-26
+
+### ⚙️ Motor Nativo Rust (`yaguarete_core` / `crates/yaguarete_core`)
+- **Trazabilidad Precisa de Errores en Tiempo de Ejecución (Línea y Columna):**
+  - Se extendió el nodo `Statement::Located` del AST para almacenar la columna (`column: usize`) además de la línea de origen del código fuente.
+  - El analizador sintáctico (`parser.rs`) ahora propaga línea y columna exactas para todas las sentencias y sentencias de actualización en bucles `PARA`.
+  - El intérprete (`eval.rs`) ahora mantiene `current_column` y rastrea con precisión la ubicación del error en desbordamientos de índices de vectores/matrices, accesos inválidos a miembros de estructuras, llamadas a métodos o funciones no compatibles, y operaciones aritméticas inválidas o división por cero.
+  - Se añadieron `call_line` y `call_column` al marco de llamadas (`CallFrame`) para preservar y restaurar la ubicación original al retornar o fallar dentro de funciones invocadas.
+  - Se corrigió el reporte que anteriormente mostraba `Error de ejecución en línea 0, columna 0`, mostrando ahora la línea y columna exactas donde se originó el fallo.
+  - Incorporación de test de regresión automatizado `test_runtime_error_line_and_column` en `crates/yaguarete_core/tests/test_engine.rs`.
+
+### 🧩 Extensión y Empaquetado Oficial (v2.0.3)
+- Empaquetado y actualización del paquete VSIX oficial: `extension-vscode/yaguarete-language-support-2.0.3.vsix`.
+- Sincronización de metadatos de versión `2.0.3` en todo el workspace (`crates/yaguarete_core`, `crates/yaguarete_cli`, `crates/yaguarete_installer`, `extension-vscode/package.json`, instaladores y scripts auxiliares).
+
+## [2.0.2] - 2026-10-23
+
+### 📚 Documentación Integral y Mejoras en Estructuras de Datos (`pilas.yaguarete` y `colas.yaguarete`)
+- **Documentación Paso a Paso de Algoritmos Clave:**
+  - Explicación exhaustiva, detallada y estructurada para cada paso de las operaciones de pilas y colas:
+    - `agregar_elemento_pila`: Algoritmo *push* sobre lista doblemente enlazada (LIFO), detallando enlace bidireccional y actualización de cima y base en tiempo constante $O(1)$.
+    - `sacar_elemento_pila`: Algoritmo *pop* con desconexión completa y aislamiento de punteros del nodo extraído.
+    - `agregar_elemento_cola`: Algoritmo *enqueue* sobre lista simplemente enlazada (FIFO), asegurando que el nuevo nodo sea terminal y actualizando extremos en $O(1)$.
+    - `sacar_elemento_cola`: Algoritmo *dequeue* con extracción del frente y sincronización de final.
+  - Documentación de cabecera en todas las funciones y estructuras secundarias: constructores (`instanciar_nodo_cliente`, `instanciar_pila`, `instanciar_cola`), utilitarios de inserción por lote (`agregar_elementos_pila`, `agregar_elementos_cola`) y rutinas de diagnóstico (`mostrar_info_pila`, `mostrar_info_cola`).
+- **Corrección de Caso Límite Crítico en `sacar_elemento_pila`:**
+  - Se corrigió el error en tiempo de ejecución al desapilar el último nodo restante: la asignación `pila.procesar_primero.anterior_cliente = NULO` se ejecutaba cuando `procesar_primero` ya era `NULO`. Ahora se valida condicionalmente `SI (pila.procesar_primero != NULO)` y se sincroniza adecuadamente `pila.procesar_ultimo = NULO`.
+- **Blindaje y Aislamiento de Memoria:**
+  - Validación defensiva de punteros contra referencias nulas (`nuevo_nodo == NULO`) en `agregar_elemento_pila` y `agregar_elemento_cola`.
+  - Eliminación de instanciaciones redundantes de nodos auxiliares antes de verificar si la estructura estaba vacía, optimizando el uso de memoria.
+
+### ⚙️ Motor Nativo Rust (`yaguarete_core` / `crates/yaguarete_core`)
+- **Corrección de Sintaxis de Retorno de Estructuras en Funciones (`parser.rs`):**
+  - Se corrigió la regla sintáctica en `parse_function` para reconocer identificadores de estructuras de usuario como tipos de retorno válidos (`FUNCION f(): MiEstructura`) en la misma línea aun cuando la siguiente línea comience con comentarios o bloques no declarativos (`SI`, `MIENTRAS`, etc.).
+  - Incorporación de test de regresión automatizado en `crates/yaguarete_core/tests/test_estructuras.rs`.
+
+### 🧩 Extensión y Empaquetado Oficial (v2.0.2)
+- Compilación y actualización del paquete VSIX oficial: `extension-vscode/yaguarete-language-support-2.0.2.vsix`.
+- Actualización de metadatos de versión en `crates/yaguarete_core`, `crates/yaguarete_cli`, `crates/yaguarete_installer`, `extension-vscode/package.json` y scripts de empaquetado.
+
+## [2.0.1] - 2026-10-23
+
+### 🧩 Extensión Oficial de Visual Studio Code y Antigravity IDE (v2.0.1)
+- **Autocompletado Inteligente de Funciones y Procedimientos (IntelliSense de Alta Prioridad):**
+  - Al comenzar a escribir el nombre de cualquier función o procedimiento (`FUNCION` o `PROCEDIMIENTO`), la extensión muestra inmediatamente el nombre completo de la función en la lista de sugerencias con icono de función/método, firma de parámetros y tipo de retorno (ej. `(cola: Cola, cantidad: ENTERO)`), idéntico al comportamiento de autocompletado de Python en VS Code.
+  - Ordenamiento prioritario (`sortText = '0_' + fn.name`) para garantizar que las funciones de usuario aparezcan en el primer lugar de sugerencias de autocompletado frente a snippets y palabras clave.
+  - Recolección multi-módulo: indexación y autocompletado de funciones y procedimientos tanto del archivo activo como de todos los documentos `.yaguarete` abiertos en el workspace.
+- **Autocompletado de Variables y Parámetros en Ámbito:**
+  - Inclusión automática en IntelliSense de variables locales, parámetros de funciones y variables de iteración (`PARA`) declaradas en el ámbito actual (`sortText = '1_' + var.name`).
+- **Soporte de Ayuda de Parámetros en Tiempo Real (`SignatureHelpProvider`):**
+  - Registro de proveedor de ayuda de firma activado por los caracteres `(` y `,`. Al escribir argumentos de una función o procedimiento, se despliega dinámicamente la firma completa resaltando el parámetro actual.
+- **Robustecimiento del Analizador de Cabeceras de Función (`FN_HEADER_RE`):**
+  - Soporte completo para tipos de retorno de estructuras personalizadas y arreglos (`[A-Za-z_][A-Za-z0-9_]*(?:\s*\[\s*\])*`), permitiendo tipos alfanuméricos con guiones bajos y dimensiones como `NodoCliente` y `TIPO[]`.
+- **Coloreado de Sintaxis TextMate para Estructuras en Parámetros y Retornos:**
+  - Actualización de `yaguarete.tmLanguage.json` para reconocer y resaltar con la clase de token de estructura (`entity.name.type.struct.yaguarete`, color verde menta/turquesa) los tipos de dato estructura tanto en los parámetros de funciones y procedimientos (`nodo_pila: Pila`) como en los tipos de retorno (`instanciar_nodo_cliente(): NodoCliente`), preservando al mismo tiempo el coloreado azul distintivo de los tipos primitivos (`ENTERO`, `CADENA`, etc.).
+  - Soporte ampliado en declaraciones de variables con dimensiones de vectores/matrices de estructuras (`Pila[]`, `NodoCliente[10]`).
+- **Nuevo Paquete VSIX Oficial v2.0.1:**
+  - Compilación y empaquetado de `yaguarete-language-support-2.0.1.vsix` e incrustación en el instalador gráfico nativo de Windows.
+
+### 🔄 Verificación y Notificación Automática de Actualizaciones en CLI Nativo (Rust)
+- **Comprobación Real contra GitHub Releases (`updater.rs`):**
+  - Implementación en Rust de la consulta directa a la API de GitHub (`/repos/caidevOficial/Yaguarete_Lang/releases/latest`) para comparar versiones semánticas reales.
+  - Caché local de 1 hora en `%LOCALAPPDATA%\Yaguarete\version_cache.json` compatible con versiones históricas.
+  - Subcomando `yaguarete update --check` funcional: detecta con precisión si hay una versión superior disponible en GitHub Releases.
+  - Comprobación en segundo plano no bloqueante al ejecutar archivos (`run`, `check`) y al iniciar la consola interactiva REPL, emitiendo avisos con estilo pip cuando hay actualizaciones.
+  - Subcomando `yaguarete update` / `upgrade`: descarga y ejecución automática del asistente oficial de instalación (`Instalador_Yaguarete.exe`).
+
+### 🐞 Depurador Nativo Interactivo DAP (*Debug Adapter Protocol*)
+- **Soporte de Breakpoints en VS Code y Antigravity:**
+  - Registro de capacidades de depuración en `extension-vscode`: puntos de interrupción en margen izquierdo (`breakpoints`), configuración automática de lanzamiento (`initialConfigurations`) y comando directo `yaguarete.debugFile`.
+  - Servidor de depuración nativo en Rust invocado con `yaguarete dap`, comunicándose por `stdin`/`stdout` mediante el protocolo estándar DAP (*Debug Adapter Protocol*).
+- **Control de Ejecución Paso a Paso:**
+  - Soporte de acciones: *Continuar* (`continue`), *Paso por procedimientos* (`next` / step over), *Paso por instrucciones* (`stepIn`) y *Paso para salir* (`stepOut`), gestionando la profundidad de llamadas en funciones y procedimientos.
+  - Parada opcional en el inicio (`stopOnEntry`) y pausa interactiva (`pause`).
+- **Inspección de Pila de Llamadas y Variables:**
+  - Desglose jerárquico de ámbitos y marcos de ejecución (*Call Stack*).
+  - Inspección en vivo de variables locales, arreglos, matrices y campos de estructuras de datos personalizadas con protección contra ciclos y recursión infinita.
+  - Evaluación de expresiones en consola de depuración y hovers interactivos (`x`, `p.campo`, `v[0]`).
+- **Anotación de Líneas en AST (`Statement::Located`):**
+  - Envoltorio de sentencias con número de línea original preservado sin alterar el rendimiento ni la compatibilidad del intérprete central.
+  - Redirección transparente de `IMPRIMIR` mediante `print_sink` a eventos `output` de depuración sin contaminar el canal del protocolo.
+
+## [2.0.0] - 2026-10-17
+
+### 🚀 Nuevo Motor Nativo en Rust (Workspace Cargo)
+- **Migración Arquitectónica Completa:** Creación de un workspace en Rust compuesto por:
+  - `crates/yaguarete_core`: Motor central que contiene el lexer (`lexer.rs`), AST tipado (`ast.rs`), parser recursivo descendente (`parser.rs`), comprobación estricta de tipos (`eval.rs`), e intérprete de ejecución directa sin runtime externo.
+  - `crates/yaguarete_cli`: CLI nativo multiplataforma (`yaguarete`) con subcomandos `run`, `repl`, `check`, `lsp-check` y flags de tiempo `--time` y `--time-full`.
+  - `crates/yaguarete_installer`: Asistente GUI autónomo para Windows desarrollado con `eframe`/`egui`, tema Dark Magenta institucional y soporte High-DPI.
+- **Rendimiento Revolucionario:**
+  - Tiempo de arranque en frío (*Cold Start*): **<1 ms** (~250x más rápido).
+  - Ejecución de algoritmos: QuickSort ordenando arreglos en **1 ms** frente a **3.240 ms** en Python (~300x más rápido).
+  - Huella de memoria mínima: **< 5 MB RAM** (90% menor consumo).
+  - Binario autónomo: **0.83 MB** sin DLLs ni runtime externo (90% más liviano que los 7.8 MB previos).
+
+### 💻 Consola Interactiva REPL (`yaguarete repl`)
+- **Evaluación Didáctica en Tiempo Real:** Subcomando `yaguarete repl` (y ejecución por defecto al invocar `yaguarete` sin argumentos) con evaluación de expresiones instantánea (`=> <valor>`).
+- **Buffer Multilínea Inteligente:** Función `is_input_complete` con stack de bloques léxicos para admitir sentencias multilínea (`FUNCION`, `SI-SINO`, bucles) y prompt alternado (`yaguarete> ` / `...    `).
+- **Metacomandos:** `:ayuda`, `:variables` (tabla ASCII estilizada con anchos dinámicos), `:limpiar`, `:cancel` y `:salir`.
+
+### 🧩 Extensión Oficial de Visual Studio Code y Antigravity IDE (v2.0.0)
+- **Diagnósticos Sub-milisegundo:** Consumo directo del comando `yaguarete lsp-check --json --stdin`, eliminando toda dependencia de Python para el linter en tiempo real.
+- **Comando REPL Integrado:** Nuevo comando `YAGUARETÉ: Iniciar consola interactiva REPL` (`yaguarete.startRepl`) accesible desde paleta de comandos y botones de navegación.
+- **Detección Automática de Binarios:** Detección de binarios en workspace local (`target/release/yaguarete`), `%LOCALAPPDATA%` en Windows y `/usr/local/bin` en Linux/macOS.
+- **Resaltado de Sintaxis Completo:** Gramática TextMate actualizada para reconocer tipos personalizados de `ESTRUCTURA` (`entity.name.type.struct.yaguarete`), operadores `++` y `--`, palabras reservadas y literales.
+- **Inspección y Hover Sin Fallos:** Reparación del parser de contexto léxico en `isInCommentOrString` admitiendo comentarios estilo `#`, habilitando la inspección hover de variables y funciones en cualquier contexto de código.
+- **Tema de Iconos Integrado:** Nuevo tema de iconos oficial (`yaguarete-icon-theme.json`) aportado vía `iconThemes` y activación por workspace (`workspaceContains:**/*.yaguarete`), dotando a los módulos `.yaguarete` de su icono magenta en el árbol de archivos.
+- **Nuevo Paquete VSIX y Despliegue Robusto:** Publicación de `yaguarete-language-support-2.0.0.vsix` embebido en el instalador; actualización de `install_extension.py` para depurar `.obsolete` y registrar formalmente la extensión en `extensions.json` en VS Code, Cursor y Antigravity IDE.
+
+### 🎨 Iconos y Asociación de Archivos Multiplataforma
+- **Windows:** Registro dual de ProgIDs (`YaguareteFile` y `Yaguarete.Program`) con clave `DefaultIcon`, sincronización con `OpenWithProgids` en el registro de Windows y emisión de `SHCNE_ASSOCCHANGED` para refresco instantáneo del explorador.
+- **Linux:** Adición de iconos MIME en `icons/hicolor/256x256/mimetypes/` (`application-x-yaguarete.png` y `text-x-yaguarete.png`) en paquetes `.deb` y script `install.sh`.
+- **Publicación Pre-release:** Automatización de GitHub Actions configurada expresamente para publicar la release `v2.0.0` como pre-release (`prerelease: true`).
+
+### 🧪 Suite Exhaustiva de Paridad de Pruebas (72 Tests en Rust)
+- **100% de Paridad Certificada:** Porting y ampliación de todos los casos de prueba de Python a suites nativas en Rust (`test_engine.rs`, `test_operators.rs`, `test_estructuras.rs`, `test_interpreter.rs`, `test_cli.rs`, `yaguarete_installer::tests`).
+- **Verificación Estricta de Tipos:** Validación estática en tiempo de ejecución de asignaciones y retornos, precisión simple de 32 bits para `FLOTANTE` vs doble de 64 bits para `REAL`.
+- **Auditoría de Código:** `cargo clippy --workspace -- -D warnings` con **0 advertencias**.
+
+### 🖼️ Asistente de Instalación Gráfico Nativo (`Instalador_Yaguarete.exe`)
+- **GUI Moderna y Autónoma en Rust:** Reemplazo completo de la interfaz basada en Tkinter/PyInstaller por una aplicación nativa escrita en Rust (`eframe`/`egui`).
+- **Reducción de Tamaño Masiva:** El ejecutable del instalador pasa de ~18 MB a **5.05 MB** (72% más liviano) incluyendo todos los recursos embebidos en el binario: `yaguarete.exe` compilado, `yaguarete_icon.ico` y la extensión `yaguarete-language-support-2.0.0.vsix`.
+- **Migración Fluida y Resiliente desde Python/PyInstaller:** Ruptura de herencia de entorno y handles (`_MEIPASS2`) para evitar avisos de borrado de temporales, manejo resiliente contra bloqueos de archivos en Windows (`os error 32`) con reintentos y reemplazo atómico (*Move-then-Replace*), y purga automática de carpetas temporales residuales `_MEI*` en `%TEMP%`.
+- **Instalación Desatendida:** Soporte para flag `--silent` para automatización en entornos de laboratorio o CI/CD.
+- **Metadatos e Iconos Nativos Windows PE:** Integración con `winres`, incrustando el icono institucional y metadatos de versión en el recurso PE de Windows.
+
+---
+
+## [1.11.6] - 2026-10-17
+
+> Esta versión es la primera publicada desde la `1.11.0` e **incluye también los cambios de la `1.11.5`** (iconos de archivos `.yaguarete`, empaquetado Linux y pruebas de `build_linux_package.py`), detallados más abajo.
+
+### 📖 Documentación del Lenguaje
+- **Operadores aritméticos**: nueva tabla de operadores en el `README.md` (`+`, `-`, `*`, `/`, `//`, `%`) con tipo de retorno, ejemplos y la diferencia entre `/` (división real) y `//` (división entera, siempre `ENTERO`).
+- **División entera (`//`)**: se elimina la nota obsoleta que indicaba que YAGUARETÉ no tenía división entera; el ejemplo de *Selection Sort* ahora usa `//` y `%` para recorrer la matriz sin aplanarla.
+- **Medición de tiempo (`--time`, `--time ms`, `--time full`, `--time completo`, `--time-full`)**: documentación unificada con tabla de modos, ejemplos y salidas esperadas en el `README.md` y en la especificación del lenguaje.
+- **Cobertura de pruebas**: el badge del `README.md` refleja los 52 tests unitarios actuales.
+- **Extensión VS Code**: el `README.md` de la extensión documenta el resaltado de `//`, `%` y `#` y el icono de archivos `.yaguarete`.
+
+### 🐛 Correcciones del Lenguaje y CLI
+- **Comprobación explícita de actualizaciones (`yaguarete update --check`)**: `check_for_update` utilizaba el archivo de caché local (con TTL de 6 horas) sin consultar la API de GitHub cuando el usuario solicitaba expresamente verificar si había una nueva versión. Se implementó `check_version_status` con `force_online=True`, asegurando que `yaguarete update --check` y `yaguarete upgrade --check` verifiquen siempre en vivo contra GitHub Releases y reporten errores de conectividad claramente.
+- **División entera dentro de índices**: expresiones como `matriz[p // columnas][p % columnas] = valor` (o `v[n // 2]`) ya no se interpretaban como división entera sino como comentario, provocando un `ParseError`. El lexer ya no aplica la heurística de "declaración + comentario" dentro de corchetes o paréntesis sin cerrar. Se añade `test_division_entera_dentro_de_indices` a `tests/test_operators.py`.
+
+### 🎨 Iconos y Empaquetado Oficial
+- **Iconos de archivos `.yaguarete`**:
+  - **Extensión VS Code / Antigravity / Cursor**: se declara el icono de lenguaje (`contributes.languages[].icon`) con `icons/yaguarete-file.png`, de modo que los archivos `.yaguarete` muestran el logo de YAGUARETÉ en el explorador y en las pestañas (al estilo de Python o Rust).
+  - **Windows**: el instalador notifica al Explorador (`SHChangeNotify`) tras registrar la asociación para refrescar el icono sin reiniciar el sistema.
+  - **Linux**: el tipo MIME usa el nombre estándar `application-x-yaguarete` y se instala el icono bajo ese nombre; se refresca la caché de iconos (`gtk-update-icon-cache`) en `install.sh`, `uninstall.sh`, `postinst` y `postrm`.
+- **Constructor de paquetes Linux (`build_linux_package.py`)**:
+  - Generación de ejecutables ZipApp standalone universales, paquetes `.deb` y `.tar.gz` con validación estricta de binarios reales y suite de pruebas en `tests/test_build_linux_package.py`.
+
+### 🚀 Release y CI
+- **Notas de release (`generate_release_notes.py`)**: se elimina `shell=True` en las llamadas a `git`, que en Linux (runner `ubuntu-latest`) impedía obtener el registro de commits desde el último tag. Ahora cada release incluye las novedades de esta sección del CHANGELOG y la lista de commits reales.
+- **Versionado**: sincronización de la versión `1.11.6` en intérprete, instaladores, metadatos de Windows, paquetes Linux y extensión (`yaguarete-language-support-1.11.6.vsix`).
+
+---
+
+## [1.11.5] - 2026-10-17
+
+### 🎨 Iconos de archivos .yaguarete
+- **Extensión VS Code / Antigravity / Cursor**: se declara el icono de lenguaje (contributes.languages[].icon) con icons/yaguarete-file.png, de modo que los archivos .yaguarete muestran el logo de YAGUARETÉ en el explorador y en las pestañas (igual que Python o Ruby).
+- **Windows**: el instalador notifica al Explorador (SHChangeNotify) tras registrar la asociación para refrescar el icono sin reiniciar.
+- **Linux**: el tipo MIME usa el nombre estándar `application-x-yaguarete` y se instala el icono bajo ese nombre; se refresca la caché de iconos (gtk-update-icon-cache) en install.sh, uninstall.sh, postinst y postrm.
+
+---
+
+## [1.11.0] - 2026-10-16
+
+### ➗ Operadores Aritméticos y Gramática
+- **Operador de División Entera (`//`)**:
+  - Soporte completo del operador infijo `//` en el analizador léxico (`Lexer`), sintáctico (`Parser`), verificador de tipos (`TypeChecker`) e intérprete (`Interpreter`).
+  - Retorno garantizado de tipo `ENTERO` con chequeo estático estricto para operandos numéricos y control de división por cero.
+  - Desambiguación léxica inteligente: convivencia transparente entre expresiones con división entera `//` y comentarios de línea con `//`.
+- **Operador de Módulo (`%`)**:
+  - Soporte infijo oficial del símbolo `%` para calcular el residuo/resto de una división entera (equivalente a la función incorporada `MOD(a, b)`).
+  - Validación de tipos estricta y protección contra módulo por cero en tiempo de ejecución.
+- **Soporte de Comentarios de Línea con Numeral (`#`)**:
+  - Se añade `#` como delimitador de comentarios de línea unificado, compatible con la convención de Python y entornos scripting.
+- **Suite de Pruebas Unitarias**:
+  - Creación de `tests/test_operators.py` cubriendo precedencia, llamadas a funciones, arrays, excepciones por cero y coexistencia sintáctica con comentarios (43 tests unitarios superados).
+- **Extensión VS Code**:
+  - Actualización de la sintaxis TextMate (`yaguarete.tmLanguage.json`) para resaltar `//`, `%` y `#`.
+
+---
+
+## [1.10.0] - 2026-10-16
+
+### 🐧 Soporte Oficial y Empaquetado para GNU/Linux
+- **Paquete Nativo Debian / Ubuntu (`.deb`)**:
+  - Generación de `yaguarete_<version>_amd64.deb` con instalación de binario en `/usr/bin/yaguarete`, registro de tipo MIME `application/x-yaguarete` para archivos `.yaguarete`, iconos en tema de sistema (`hicolor/256x256`) y acceso directo de escritorio (`yaguarete.desktop`).
+  - Scripts de control `postinst` y `postrm` con actualización automática de bases de datos de escritorio y MIME, junto con registro automático de la extensión si VS Code o Cursor están presentes.
+- **Tarball Standalone Universal (`.tar.gz`)**:
+  - Generación de `yaguarete-<version>-linux-x64.tar.gz` compatible con cualquier distribución Linux (Arch, Fedora, Debian, etc.), incluyendo binario ELF nativo, scripts `install.sh` y `uninstall.sh` con detección automática de permisos (root vs usuario en `~/.local/bin`), paquete VSIX y licencia.
+- **Constructor Autónomo Multiplataforma (`build_linux_package.py`)**:
+  - Herramienta Python capaz de generar tanto `.deb` (usando `dpkg-deb` o un ensamblador puro del formato 'ar') como `.tar.gz` de forma reproducible.
+- **Integración Continua Multiplataforma (GitHub Actions)**:
+  - Workflow de release actualizado para compilar en paralelo en Windows (`windows-latest`) y Linux (`ubuntu-latest`), publicando instaladores y binarios para ambas plataformas en cada release oficial.
+- **Gestión Dinámica de Extensiones y Limpieza de VSIX**:
+  - Refactorización de `install_extension.py` para purgar dinámicamente versiones anteriores obsoletas mediante coincidencia de patrones.
+  - Limpieza de paquetes `.vsix` obsoletos en `extension-vscode/`, conservando únicamente la versión activa `1.10.0`.
+- **Extensión VS Code v1.10.0**:
+  - Empaquetado y actualización de `yaguarete-language-support-1.10.0.vsix`.
+
+---
+
+## [1.9.0] - 2026-10-16
+
+### 🚀 Rendimiento y Optimización de Algoritmos
+- **Optimización de Quicksort ($O(N \log N)$)**:
+  - Implementación con selección de **pivote central** (`medio = vector.largo / 2`), evitando la degradación al peor caso cuadrático $O(N^2)$ en vectores ordenados o invertidos.
+  - Partición balanceada de 3 vías (menores, iguales y mayores) que preserva elementos repetidos y elimina pasadas redundantes sobre el vector.
+  - Capaz de ordenar **100.000 elementos** en ~37 segundos en el intérprete sin desbordamiento.
+- **Ampliación de Límite de Recursión (`sys.setrecursionlimit(50000)`)**:
+  - Pila de llamadas recursivas ampliada a 50.000 frames en el motor del intérprete para admitir algoritmos de árboles, grafos y particiones recursivas profundas sin colapsar el límite por defecto de Python.
+- **Validación Acelerada de Vectores (*Fast-Path*)**:
+  - En `pseudocode/types_system.py`, se implementó validación rápida para vectores numéricos y homogéneos evitando clonaciones profundas innecesarias en llamadas y retornos de funciones recursivas.
+- **Diagnóstico Educativo de `RecursionError`**:
+  - Captura limpia y mensaje formativo en la CLI ante recursiones infinitas o casos base inalcanzables.
+
+### 📖 Documentación y CLI
+- **Documentación Completa de `--time`**:
+  - Inclusión en `--help` y `README.md` de las opciones `--time ms` (tiempo de ejecución en milisegundos) y `--time full` / `--time-full` (desglose legible en horas, minutos, segundos y milisegundos).
+- **Extensión VS Code v1.9.0**:
+  - Empaquetado y actualización de `yaguarete-language-support-1.9.0.vsix`.
+- **Automatización de Release Notes**:
+  - Integración dinámica de novedades por versión en `release_notes.md` y notas de release en GitHub generadas desde `CHANGELOG.md`.
+
+---
+
+## [1.8.0] - 2026-10-16
+
+### ⏱️ Interfaz de Línea de Comandos (CLI)
+- **Medición de Tiempo Detallada (`--time full` / `--time-full`)**:
+  - Desglose con precisión en horas, minutos, segundos y milisegundos con concordancia singular/plural (ej: `[Tiempo total: 1 Hora, 15 Minutos, 30 Segundos, 45 Milisegundos]`).
+- **Compatibilidad Dual de `--time`**:
+  - `--time` o `--time ms` mantiene la salida tradicional en milisegundos (`[Tiempo total: 211.22 ms]`).
+- **Normalización de Argumentos CLI**:
+  - Soporte para ubicar `--time [modo]` en cualquier posición de la línea de comandos sin interferir con el argumento posicional obligatorio `file`.
+- **Suite de Pruebas CLI**:
+  - Pruebas unitarias en `tests/test_cli_time.py` para validar normalización de argumentos y formateo gramatical de tiempo.
+
+---
+
+## [1.7.0] - 2026-10-16
+
+### 💡 IDE y Experiencia de Desarrollo
+- **Autocompletado e IntelliSense por Punto (`.`) en VS Code / Antigravity**:
+  - Al escribir un punto (`.`) sobre variables de estructura, despliega la lista de atributos con sus tipos y documentación.
+  - Soporte de autocompletado para el tipo `ARCHIVO`: métodos `LEER_LINEA()`, `ESCRIBIR_LINEA()`, `CERRAR_ARCHIVO()` y propiedad `findearchivo`.
+  - Soporte recursivo para estructuras encadenadas y listas de estructuras.
+
+---
+
+## [1.6.1] - 2026-10-16
+
+### 🎨 Identidad Visual
+- **Banner Comunitario Institucional**:
+  - Estilizado en color fucsia corporativo oficial de YAGUARETÉ (#d946ef).
+
+---
+
+## [1.6.0] - 2026-10-16
+
+### ✨ Nuevas Características
+- **Estructuras de Datos Heterogéneas (`ESTRUCTURA ... FIN ESTRUCTURA`)**:
+  - Definición de tipos compuestos por el usuario con múltiples atributos tipados.
+  - Creación de vectores y matrices de estructuras (`Libro estante[10]`).
+  - Serialización directa `Libro{nombre: '...', hojas: 350}`.
+- **Tipo de Dato y Literal Universal `NULO` (`null` / `None`)**:
+  - Manejo de referencias nulas y comparaciones seguras de punteros.
+- **Estructuras Autorreferenciales**:
+  - Creación de nodos para listas enlazadas, pilas y colas.
+- **Actualizador Automático (`yaguarete update`)**:
+  - Notificación en segundo plano (estilo `pip`) y actualización automatizada contra GitHub Releases.

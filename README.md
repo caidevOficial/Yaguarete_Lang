@@ -1,0 +1,866 @@
+<p align="center">
+  <img src="yaguarete_icon.png" width="160" alt="YAGUARETÉ Logo" />
+</p>
+
+<h1 align="center">⚡ YAGUARETÉ</h1>
+
+<p align="center">
+  <strong>El lenguaje de pseudocódigo en español fuertemente tipado para el aprendizaje moderno de algoritmos, estructuras de datos y desarrollo de software.</strong>
+</p>
+
+<p align="center">
+  <a href="#-autoría-y-créditos"><img src="https://img.shields.io/badge/Autor-%3CFacu%20Falcone%3E-0f172a?style=for-the-badge" alt="Autor" /></a>
+  <img src="https://img.shields.io/badge/Versi%C3%B3n-0.1.1-0066ff?style=for-the-badge" alt="Versión" />
+  <img src="https://img.shields.io/badge/Extensi%C3%B3n-.yaguarete-38bdf8?style=for-the-badge" alt="Extensión .yaguarete" />
+  <img src="https://img.shields.io/badge/VS_Code-Extensi%C3%B3n_Oficial-1e3a8a?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="VS Code Extension" />
+  <img src="https://img.shields.io/badge/Tests-82%20passing-22c55e?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/Licencia-GPL--3.0-2563eb?style=for-the-badge" alt="Licencia GPL-3.0" />
+</p>
+
+---
+
+## 📑 Tabla de Contenidos
+
+- [🌟 ¿Qué es YAGUARETÉ?](#-qué-es-yaguareté)
+- [✨ Características Principales](#-características-principales)
+- [🚀 Instalación y Ecosistema](#-instalación-y-ecosistema)
+  - [Instalador Gráfico Autónomo](#-instalador-gráfico-autónomo)
+  - [Uso como Módulo de Python](#-uso-como-módulo-de-python)
+- [💻 Interfaz de Línea de Comandos (`yaguarete`)](#-interfaz-de-línea-de-comandos-yaguarete)
+  - [1. `yaguarete run` — Ejecutar archivo](#1-yaguarete-run--ejecutar-archivo)
+  - [2. `yaguarete repl` — Consola interactiva](#2-yaguarete-repl--consola-interactiva-repl)
+  - [3. `yaguarete check` — Verificación estática](#3-yaguarete-check--verificación-estática)
+  - [4. `yaguarete lsp-check` — Diagnóstico en tiempo real](#4-yaguarete-lsp-check--diagnóstico-en-tiempo-real-para-ides-lsp)
+- [🎨 Extensión Oficial para Visual Studio Code](#-extensión-oficial-para-visual-studio-code)
+- [💎 Sistema de Tipos (Fuertemente Tipado)](#-sistema-de-tipos-fuertemente-tipado)
+  - [Tabla de Tipos Primitivos](#tabla-de-tipos-primitivos)
+  - [Vectores y Matrices](#vectores-y-matrices)
+  - [Estructuras de Datos (`ESTRUCTURA`)](#-estructuras-de-datos-estructura)
+  - [Estructuras Autorreferenciales y Tipo `NULO`](#-estructuras-autorreferenciales-y-tipo-nulo-listas-y-punteros)
+  - [Reglas de Conversión y Concatenación](#reglas-de-conversión-y-concatenación)
+- [📜 Sintaxis y Gramática Canónica](#-sintaxis-y-gramática-canónica)
+  - [1. Estructura General del Programa](#1-estructura-general-del-programa)
+  - [2. Funciones y Procedimientos](#2-funciones-y-procedimientos)
+  - [3. Estructuras de Control](#3-estructuras-de-control)
+  - [4. Manejo de Archivos (`ARCHIVO`)](#4-manejo-de-archivos-archivo)
+  - [5. Funciones Incorporadas (Built-ins)](#5-funciones-incorporadas-built-ins)
+- [💡 Ejemplo Completo de Algoritmo](#-ejemplo-completo-de-algoritmo)
+- [🔢 Ordenar una Matriz (Selection Sort)](#-ordenar-una-matriz-selection-sort)
+- [🧪 Pruebas Automatizadas](#-pruebas-automatizadas)
+- [👤 Autoría y Créditos](#-autoría-y-créditos)
+
+---
+
+## 🌟 ¿Qué es YAGUARETÉ?
+
+**YAGUARETÉ** es un lenguaje de programación de pseudocódigo en español, diseñado para combinar la intuición pedagógica del pseudocódigo clásico con el rigor técnico y la seguridad de un **sistema de tipos estático y moderno**.
+
+Permite escribir algoritmos estructurados con palabras clave naturales en español (`INICIO`, `FUNCION`, `MIENTRAS`, `PARA`, `SI`), mientras que un analizador sintáctico descendente recursivo y un verificador de tipos estático aseguran la consistencia de datos antes y durante la ejecución.
+
+> [!NOTE]
+> Todos los archivos fuente de YAGUARETÉ utilizan la extensión oficial obligatoria **`.yaguarete`** (por ejemplo: `algoritmo.yaguarete`, `nomina.yaguarete`).
+
+---
+
+## ✨ Características Principales
+
+- 🛡️ **Fuertemente Tipado:** Validación estática de variables, firmas de funciones, aridad y tipos de retorno.
+- 🚀 **Motor Nativo en Rust (v2.0):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad (~300x más rápido en algoritmos complejos: QuickSort en 1 ms frente a 3.240 ms previos) y cero dependencias de runtime.
+- 💻 **Consola Interactiva REPL:** Nuevo entorno interactivo `yaguarete repl` para evaluar expresiones y algoritmos didácticos al vuelo con tabla de variables (`:vars`) y balanceo multilínea.
+- 📐 **Precisión Numérica Determinística:** Distinción clara entre `FLOTANTE` (IEEE 754 de 32 bits) y `REAL` (IEEE 754 de 64 bits de doble precisión).
+- 🧩 **Arreglos Dinámicos y Matrices:** Vectores (`TIPO[]`) y matrices bidimensionales (`TIPO[][]`) con introspección mediante la propiedad `.largo` y concatenación con el operador `+`.
+- 📁 **Manejo Nativo de Archivos:** Tipo `ARCHIVO` integrado con lectura secuencial (`.LEER_LINEA()`), escritura (`.ESCRIBIR_LINEA()`) y detección de fin de archivo (`.findearchivo`).
+- ⚡ **CLI Nativo y Autónomo:** Binario `yaguarete.exe` ultra-compacto (~830 KB) con icono y metadatos Windows PE integrados.
+- 🧠 **Servidor de Diagnóstico LSP en Tiempo Real:** Comando `yaguarete lsp-check` con respuesta en <0.2 ms y salida JSON estándar para VS Code e IDEs.
+- 🐆 **Identidad Visual "Jaguar Gamer" (v0.1.1):** Nuevo isotipo oficial con diseño vectorial afilado estilo esports, paleta cibernética "Electric Blue & Cyber Cyan" (`#0066FF`, `#00D4FF`, `#38BDF8`), iconos High-DPI y tema de iconos renovado para el explorador de VS Code.
+- 🎨 **Herramientas de Desarrollo:** Extensión oficial para VS Code con resaltado sintáctico, autocompletado, diagnósticos visuales instantáneos y ejecución de REPL integrado.
+- 🖼️ **Instalador Todo-en-Uno (Rust & Python GUI):** Asistente gráfico moderno con la nueva identidad Dark Electric Blue, soporte High-DPI, ~4.8 MB (4x más liviano que versiones anteriores) y modo silencioso (`--silent`).
+
+---
+
+## 🚀 Instalación y Ecosistema Multiplataforma
+
+### 🪟 En Windows
+
+#### 📦 Instalador Gráfico Autónomo (Recomendado)
+La forma más sencilla de configurar todo el ecosistema de YAGUARETÉ en Windows es mediante el asistente todo-en-uno:
+
+1. Descarga y ejecuta **`Instalador_Yaguarete.exe`** desde los releases oficiales.
+2. El asistente te permitirá de forma automatizada:
+   - ✅ Instalar el comando nativo `yaguarete.exe` en tu sistema (`%LOCALAPPDATA%\Programs\Yaguarete\bin`).
+   - ✅ Añadir `yaguarete` a la variable de entorno `PATH` del usuario.
+   - ✅ Instalar la extensión oficial de **Visual Studio Code** y **Antigravity IDE**.
+   - ✅ Asociar los archivos `.yaguarete` en Windows con el icono oficial y opciones de ejecución directa.
+
+> [!TIP]
+> El instalador también soporta instalación silenciosa y desatendida mediante el flag:
+> ```powershell
+> .\Instalador_Yaguarete.exe --silent
+> ```
+
+---
+
+### 🐧 En GNU/Linux
+
+YAGUARETÉ ofrece paquetes oficiales nativos y universales para entornos Linux:
+
+#### 1. Paquete Debian / Ubuntu (`.deb`)
+Recomendado para **Ubuntu, Debian, Linux Mint, Pop!_OS, Kali Linux** y derivados:
+```bash
+# Instalación con apt (resuelve dependencias automáticamente)
+sudo apt install ./yaguarete_0.1.1_amd64.deb
+
+# O mediante dpkg:
+# sudo dpkg -i yaguarete_0.1.1_amd64.deb
+```
+Este paquete instala el binario en `/usr/bin/yaguarete`, registra la asociación MIME del archivo `.yaguarete`, el icono del lenguaje y la entrada de escritorio para aplicaciones del sistema.
+
+#### 2. Tarball Portable Universal (`.tar.gz`)
+Compatible con cualquier distribución (Arch Linux, Fedora, openSUSE, Gentoo, Alpine, etc.):
+```bash
+# Descomprimir el paquete
+tar -xzf yaguarete-0.1.1-linux-x64.tar.gz
+cd yaguarete-0.1.1-linux-x64
+
+# Instalación para el usuario actual (~/.local/bin):
+chmod +x install.sh
+./install.sh
+
+# O instalación global para todos los usuarios:
+# sudo ./install.sh
+```
+
+Para desinstalar en cualquier momento:
+```bash
+./uninstall.sh
+```
+
+#### 🛠️ Generación de Paquetes Linux (`build_linux_package.py`)
+Puedes generar los paquetes `.deb` y `.tar.gz` tú mismo de forma automatizada:
+```bash
+# Compilar binario y empaquetar (.deb y .tar.gz)
+python build_linux_package.py --compile
+
+# O empaquetar un binario existente:
+python build_linux_package.py --binary dist/yaguarete
+```
+
+---
+
+### 🐍 Uso como Módulo de Python
+
+Si prefieres ejecutar o embeber el intérprete en entornos de desarrollo Python:
+
+```bash
+# Ejecutar un archivo
+python -m pseudocode run mi_programa.yaguarete
+
+# Chequeo estático de tipos sin ejecutar
+python -m pseudocode check mi_programa.yaguarete
+```
+
+---
+
+## 💻 Interfaz de Línea de Comandos (`yaguarete`)
+
+El comando `yaguarete` ofrece una suite completa de utilidades para desarrolladores y estudiantes:
+
+```
+usage: yaguarete [-h] {run,check,tokens,lsp-check,update,upgrade} ...
+```
+
+### 1. `yaguarete run` — Ejecutar archivo
+Ejecuta el código fuente `.yaguarete` directamente:
+```bash
+yaguarete run mi_algoritmo.yaguarete
+```
+
+*Opciones de medición de tiempo de ejecución:*
+
+| Opción | Equivalentes | Salida |
+| :--- | :--- | :--- |
+| `--time` | `--time ms` | Tiempo de análisis y ejecución en **milisegundos**. |
+| `--time full` | `--time completo`, `--time-full` | Tiempo desglosado en **horas, minutos, segundos y milisegundos**. |
+
+```bash
+# Milisegundos (modo predeterminado de --time)
+yaguarete run sort.yaguarete --time
+yaguarete run sort.yaguarete --time ms
+# Salida: [Tiempo total: 211.22 ms]
+
+# Desglose completo
+yaguarete run sort.yaguarete --time full
+yaguarete run sort.yaguarete --time completo
+yaguarete run sort.yaguarete --time-full
+# Salida: [Tiempo total: 0 Horas, 0 Minutos, 0 Segundos, 211 Milisegundos]
+```
+
+> [!NOTE]
+> La opción `--time` puede ubicarse en cualquier posición de la línea de comandos. También funciona al invocar el archivo directamente: `yaguarete sort.yaguarete --time-full`. El desglose respeta singular/plural (`1 Hora`, `2 Horas`).
+
+*Otras opciones útiles:*
+- `--lenient` / `-l`: Modo permisivo para pseudocódigo informal.
+
+### 2. `yaguarete repl` — Consola Interactiva REPL
+Inicia una consola interactiva línea a línea para evaluar expresiones y algoritmos en tiempo real. Permite explorar funciones, variables y estructuras sin necesidad de crear archivos en disco:
+```bash
+# Iniciar la consola interactiva explícitamente:
+yaguarete repl
+
+# O simplemente ejecutando el comando sin argumentos:
+yaguarete
+```
+
+*Ejemplo de sesión en el REPL:*
+```text
+YAGUARETÉ (v0.1.1)
+Consola Interactiva REPL. Escribe expresiones o código de pseudocódigo.
+Comandos especiales: :ayuda, :variables, :limpiar, :salir
+
+yaguarete> ENTERO edad = 25
+yaguarete> edad * 2
+=> 50
+yaguarete> FUNCION doble(n: ENTERO): ENTERO
+...        RETORNAR n * 2
+...    FIN FUNCION
+yaguarete> doble(edad)
+=> 50
+yaguarete> :variables
+┌────────┬────────┬───────┐
+│ NOMBRE │ TIPO   │ VALOR │
+├────────┼────────┼───────┤
+│ edad   │ ENTERO │ 25    │
+└────────┴────────┴───────┘
+yaguarete> :salir
+¡Hasta luego!
+```
+
+*Metacomandos integrados:*
+- `:ayuda` / `:help`: Muestra la ayuda rápida y atajos interactivos.
+- `:variables` / `:vars`: Despliega la tabla ASCII de variables actualmente en memoria.
+- `:limpiar` / `:clear`: Reinicia el entorno y variables del intérprete.
+- `:cancel` / `:c`: Cancela una entrada multilínea en caso de error de tipeo.
+- `:salir` / `:exit` / `:quit`: Cierra la sesión interactiva limpiamente.
+
+### 3. `yaguarete check` — Verificación estática
+Analiza la sintaxis y valida todos los tipos de variables y funciones sin correr el programa:
+```bash
+yaguarete check mi_algoritmo.yaguarete
+```
+
+### 4. `yaguarete lsp-check` — Diagnóstico en tiempo real para IDEs (LSP)
+Motor de validación estática sub-milisegundo (<0.2 ms) diseñado para integrarse con Language Server Protocols y editores como VS Code, Cursor o Antigravity IDE:
+```bash
+# Validar archivo fuente y emitir diagnósticos en formato JSON estándar:
+yaguarete lsp-check mi_algoritmo.yaguarete --json
+
+# O alimentar el analizador directamente por stdin (sin tocar disco):
+cat mi_algoritmo.yaguarete | yaguarete lsp-check --stdin --json
+```
+*Salida JSON representativa:*
+```json
+{
+  "valid": false,
+  "diagnostics": [
+    {
+      "line": 4,
+      "column": 12,
+      "message": "Tipo incompatible: no se puede asignar CADENA a ENTERO",
+      "severity": "error"
+    }
+  ]
+}
+```
+
+### 4. `yaguarete update` — Actualización automática (estilo pip)
+Comprueba en GitHub Releases si existe una nueva versión del lenguaje y la instala automáticamente:
+```bash
+# Descarga e instala la versión más reciente
+yaguarete update
+
+# Solo comprobar si hay actualización disponible
+yaguarete update --check
+
+# Actualización en modo silencioso
+yaguarete update --silent
+```
+
+> [!TIP]
+> **Notificación Automática de Versión:**
+> Al igual que `pip` en Python, cada vez que ejecutas un programa o módulo de YAGUARETÉ, el sistema comprueba en segundo plano (sin ralentizar la ejecución) si hay una nueva versión disponible y te avisará al finalizar con la instrucción para actualizar:
+> ```text
+> [AVISO] Hay una nueva versión de YAGUARETÉ disponible: 1.8.0 -> 1.9.0
+> Para actualizar automáticamente, ejecuta: yaguarete update
+> ```
+
+### 4. `yaguarete tokens` — Inspección léxica
+Muestra el flujo de tokens identificados por el lexer (ideal para debugging o enseñanza de compiladores):
+```bash
+yaguarete tokens mi_algoritmo.yaguarete
+```
+
+---
+
+## 🎨 Extensión Oficial para Visual Studio Code
+
+El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` (disponible como paquete `yaguarete-language-support-0.1.1.vsix`):
+
+<p align="center">
+  <img src="yaguarete_icon.png" width="80" alt="VS Code Extension" />
+</p>
+
+### Funcionalidades:
+- 🐆 **Tema de Iconos Oficial "Jaguar Gamer" (v0.1.1):** Set completo de iconos con la nueva identidad estilizada azul eléctrica en `extension-vscode/icons/` (`yaguarete-file.svg`, `yaguarete-file.png`).
+- 🌈 **Color de Sintaxis TextMate Avanzado:** Gramática completa para palabras clave, tipos de datos primitivos, cadenas, números y comentarios (`//`, `#` y `/* */`).
+- 🏛️ **Coloreado de Estructuras Personalizadas (v2.0.1):** Resaltado distintivo (verde menta/turquesa) para tipos de estructuras en parámetros (`nodo: Pila`), valores de retorno (`(): NodoCliente`) y arreglos de estructuras (`Pila[]`, `NodoCliente[10]`).
+- 💡 **IntelliSense y Autocompletado Prioritario (v2.0.1):**
+  - **Funciones y Procedimientos**: Despliegue inmediato al tipear con firma de parámetros completa y tipos de retorno, priorizadas en el primer lugar de sugerencias (`sortText`).
+  - **Soporte Multi-Módulo**: Indexa funciones y procedimientos a través de todos los archivos `.yaguarete` abiertos en el workspace.
+  - **Variables y Parámetros en Ámbito**: Sugerencias automáticas de variables locales, parámetros y contadores de bucle `PARA`.
+- 🔔 **Ayuda de Parámetros en Tiempo Real (`SignatureHelpProvider`):** Despliegue dinámico de la firma de funciones al escribir `(` o `,`, resaltando el parámetro actual en curso.
+- ⚡ **Diagnósticos Instantáneos (<1 ms):** Valida sintaxis y tipos estáticos directamente con el motor nativo de Rust (`yaguarete lsp-check --json --stdin`), marcando errores con subrayado y en el panel de problemas al escribir.
+- 💻 **Consola Interactiva REPL Integrada:** Inicia la consola interactiva con un clic desde el botón en la barra de herramientas o mediante el comando `YAGUARETÉ: Iniciar consola interactiva REPL`.
+- 🔗 **Navegación de Código:** Soporte completo de **Ir a Definición** (`Ctrl + Clic` / `F12`), **Buscar Referencias** (`Shift + F12`) y **Vista de Esquema** (*Outline* / Breadcrumbs).
+- 🐞 **Depurador Interactivo Nativo DAP con Breakpoints:** Depura programas `.yaguarete` en VS Code fijando puntos de interrupción con un clic en el margen, avance paso a paso (*Step Over*, *Step Into*, *Step Out*), inspección de variables locales, arreglos y estructuras, y evaluación de expresiones.
+- ▶️ **Ejecución y Depuración Directa:** Botones integrados en la barra de herramientas del editor para ejecutar o depurar el archivo actual con un clic.
+- ⚡ **Snippets Rápidos:** Escribe `func`, `proc`, `para`, `mientras`, `si` o `archivo` y presiona <kbd>Tab</kbd> para generar plantillas de código instantáneas.
+
+#### Instalación Manual de la Extensión:
+```bash
+code --install-extension extension-vscode/yaguarete-language-support-0.1.1.vsix --force
+```
+
+---
+
+## 💎 Sistema de Tipos (Fuertemente Tipado)
+
+YAGUARETÉ implementa un sistema de tipos riguroso que previene errores lógicos comunes en tiempo de compilación/análisis estático.
+
+### Tabla de Tipos Primitivos
+
+| Tipo | Equivalente | Descripción | Ejemplo de Declaración |
+| :--- | :--- | :--- | :--- |
+| `ENTERO` | `int64` | Números enteros con signo | `ENTERO edad = 25` |
+| `FLOTANTE` | `float32` | Punto flotante de 32 bits (IEEE 754) | `FLOTANTE tasa = 0.05` |
+| `REAL` | `float64` | Punto flotante de doble precisión (64 bits) | `REAL sueldo = 1250450.75` |
+| `CADENA` | `string` | Texto entre comillas dobles o simples | `CADENA nombre = "Facundo"` |
+| `CARACTER` | `char` | Carácter individual | `CARACTER letra = 'A'` |
+| `BOOLEANO` | `boolean` | Valor de verdad: `VERDADERO` o `FALSO` | `BOOLEANO activo = VERDADERO` |
+| `ARCHIVO` | `Handle` | Descriptor para lectura/escritura de archivos | `ARCHIVO f = ABRIR_ARCHIVO("datos.txt", "lectura")` |
+| `NULO` | `null` / `None` | Representa la ausencia de valor o puntero nulo | `Nodo actual = NULO` |
+| `Estructura` | Objeto `struct` | Tipos compuestos y heterogéneos del usuario | `Libro libro1` |
+| `VOID` | `void` | Utilizado en procedimientos sin retorno | `PROCEDIMIENTO saludar() ...` |
+
+> [!IMPORTANT]
+> **Diferencia entre `FLOTANTE` y `REAL`:**
+> `FLOTANTE` trunca deliberadamente la mantisa a 32 bits conforme a la especificación estándar IEEE 754, mientras que `REAL` preserva 64 bits de precisión total para cálculos científicos o financieros.
+
+### Vectores y Matrices
+
+Los arreglos son tipados y cuentan con propiedades de introspección:
+
+```text
+// Vectores unidimensionales
+ENTERO edades[] = [18, 21, 30, 42]
+REAL promedios[5] = [8.5, 9.0, 7.2, 10.0, 6.8]
+
+// Matrices bidimensionales (filas x columnas)
+REAL matriz[12][30]
+ENTERO identidad[2][2] = [[1, 0], [0, 1]]
+
+// Propiedad .largo
+IMPRIMIR(edades.largo)       // 4 (cantidad de elementos)
+IMPRIMIR(matriz.largo)       // 12 (cantidad de filas)
+IMPRIMIR(matriz[0].largo)    // 30 (cantidad de columnas)
+```
+
+### 🏗️ Estructuras de Datos (`ESTRUCTURA`)
+
+YAGUARETÉ permite definir tipos de datos heterogéneos y compuestos mediante el bloque `ESTRUCTURA ... FIN ESTRUCTURA`.
+
+#### 1. Definición y Declaración
+```text
+// Definición del molde o tipo de dato compuesto
+ESTRUCTURA Libro:
+    CADENA nombre
+    ENTERO hojas
+    CADENA sinopsis
+    CADENA autor
+    CADENA editorial
+    ENTERO edicion
+FIN ESTRUCTURA
+
+INICIO
+    // Declaración de una variable de tipo estructura
+    Libro libro1
+
+    // Asignación de valores a sus campos
+    libro1.nombre = "El Aleph"
+    libro1.hojas = 210
+    libro1.sinopsis = "Colección de cuentos de Jorge Luis Borges."
+    libro1.autor = "Jorge Luis Borges"
+    libro1.editorial = "Sur"
+    libro1.edicion = 1
+
+    // Acceso a campos y representación en texto
+    IMPRIMIR("Libro: " + libro1.nombre + " (Páginas: " + libro1.hojas + ")")
+    IMPRIMIR("Objeto completo: " + libro1)
+FIN
+```
+
+*Salida:*
+```text
+Libro: El Aleph (Páginas: 210)
+Objeto completo: Libro{nombre: 'El Aleph', hojas: 210, sinopsis: 'Colección de cuentos de Jorge Luis Borges.', autor: 'Jorge Luis Borges', editorial: 'Sur', edicion: 1}
+```
+
+#### 2. Vectores de Estructuras y Paso a Funciones
+Las estructuras pueden almacenarse en vectores, matrices y pasarse como argumentos o valores de retorno en funciones y procedimientos:
+
+```text
+FUNCION resumir_libro(item: Libro): CADENA
+    RETORNAR item.nombre + " por " + item.autor + " [" + item.hojas + " págs.]"
+FIN FUNCION
+
+INICIO
+    // Arreglo de estructuras
+    Libro estante[2]
+    estante[0] = libro1
+
+    Libro libro2
+    libro2.nombre = "Ficciones"
+    libro2.autor = "Jorge Luis Borges"
+    libro2.hojas = 190
+    estante[1] = libro2
+
+    PARA (ENTERO i = 0; i < estante.largo; i++)
+        IMPRIMIR("• " + resumir_libro(estante[i]))
+    FIN PARA
+FIN
+```
+
+---
+
+### 🔗 Estructuras Autorreferenciales y Tipo `NULO` (Listas y Punteros)
+
+A partir de la versión **1.6**, YAGUARETÉ cuenta con soporte para **estructuras autorreferenciales** (estructuras que contienen campos de su mismo tipo) y el tipo/literal universal **`NULO`** (equivalente a `null` o `None`).
+
+Esto permite construir y manipular estructuras de datos dinámicas avanzadas como **Listas Enlazadas, Pilas, Colas y Árboles**.
+
+#### 1. Definición de un Nodo Enlazado
+```text
+ESTRUCTURA Nodo:
+    CADENA nombre
+    Nodo proximo_nodo
+FIN ESTRUCTURA
+```
+
+> [!NOTE]
+> **Gestión Segura de Memoria y Recursión:**
+> Al instanciar una estructura autorreferencial, YAGUARETÉ inicializa automáticamente los campos recursivos con valor `NULO`, garantizando que no ocurran ciclos infinitos ni desbordamientos de memoria en la instanciación.
+
+#### 2. Creación, Anidamiento de Nodos y Recorrido
+En este ejemplo canónico ([ejemplo.yaguarete](file:///e:/Python_d/Yaguarete_Lang/ejemplo.yaguarete)), se crean 5 nodos secuenciales enlazados en memoria y se recorren mediante un puntero auxiliar:
+
+```text
+INICIO
+
+    // Definición de la estructura autorreferencial
+    ESTRUCTURA Nodo:
+        CADENA nombre
+        Nodo proximo_nodo
+    Fin Estructura
+
+    Nodo nodo_pila = NULO
+    Nodo nodo_ultimo = NULO
+
+    // 1. Creación y anidamiento secuencial de 5 nodos (Nodo 1 -> Nodo 2 -> ... -> Nodo 5)
+    PARA (ENTERO vuelta = 0; vuelta < 5; vuelta++)
+        Nodo nuevo_nodo
+        nuevo_nodo.nombre = "Nodo " + (vuelta + 1)
+        nuevo_nodo.proximo_nodo = NULO
+
+        SI (nodo_pila == NULO)
+            nodo_pila = nuevo_nodo
+            nodo_ultimo = nuevo_nodo
+        SINO
+            nodo_ultimo.proximo_nodo = nuevo_nodo
+            nodo_ultimo = nuevo_nodo
+        FIN SI
+    FIN PARA
+
+    // 1.1 Información del árbol de nodos anidados en memoria
+    IMPRIMIR("Nodos apilados: " + nodo_pila)
+
+    // 2. Recorrido de los 5 nodos anidados utilizando el puntero auxiliar
+    Nodo nodo_aux = nodo_pila
+    MIENTRAS nodo_aux != NULO
+        IMPRIMIR("Recorriendo el nodo: " + nodo_aux.nombre)
+        nodo_aux = nodo_aux.proximo_nodo
+    FIN MIENTRAS
+
+    // 3. Información de los nodos inicio y fin
+    IMPRIMIR("Primer nodo (cabeza): " + nodo_pila.nombre)
+    IMPRIMIR("Ultimo nodo (cola): " + nodo_ultimo.nombre)
+
+FIN
+```
+
+*Salida de ejecución en consola:*
+```text
+[RUN] Ejecutando archivo: ejemplo.yaguarete (lenient=False) ...
+Nodos apilados: Nodo{nombre: 'Nodo 1', proximo_nodo: Nodo{nombre: 'Nodo 2', proximo_nodo: Nodo{nombre: 'Nodo 3', proximo_nodo: Nodo{nombre: 'Nodo 4', proximo_nodo: Nodo{nombre: 'Nodo 5', proximo_nodo: NULO}}}}}
+Recorriendo el nodo: Nodo 1
+Recorriendo el nodo: Nodo 2
+Recorriendo el nodo: Nodo 3
+Recorriendo el nodo: Nodo 4
+Recorriendo el nodo: Nodo 5
+Primer nodo (cabeza): Nodo 1
+Ultimo nodo (cola): Nodo 5
+```
+
+#### 3. Reglas de Uso de `NULO` y Seguridad en Runtime
+- **Aliases admitidos:** `NULO`, `null`, `NULL`, `None`, `NONE`, `nulo`.
+- **Operadores de comparación:** Puede compararse con igualdad (`==`) o desigualdad (`!=`) frente a cualquier variable de tipo estructura, vector, matriz o archivo:
+  ```text
+  SI (cabeza == NULO) ...
+  MIENTRAS (nodo_aux != NULO) ...
+  ```
+- **Evaluación Booleana:** En condiciones lógicas directas (`SI (nodo)`), `NULO` evalúa a `FALSO`.
+- **Protección contra Referencias Nulas (*Null-Safety*):** Intentar acceder o asignar un campo sobre una variable con valor `NULO` (ej. `nulo.campo`) emite un diagnóstico claro y didáctico:
+  ```text
+  PseudoRuntimeError: Intento de acceder al campo 'campo' en una referencia nula (NULO)
+  ```
+
+---
+
+### Reglas de Conversión y Concatenación
+
+1. **Concatenación de Cadenas Polimórfica:**
+   Al usar el operador `+` con al menos un operando de tipo `CADENA`, el otro operando es convertido a texto automáticamente:
+   ```text
+   IMPRIMIR("El sueldo total es: $" + sueldo)
+   IMPRIMIR("Estado activo: " + activo)  // Muestra: Estado activo: VERDADERO
+   ```
+2. **Concatenación de Arreglos:**
+   Dos vectores del mismo tipo pueden unirse con el operador `+`:
+   ```text
+   ENTERO grupo_a[] = [1, 2]
+   ENTERO grupo_b[] = [3, 4]
+   ENTERO grupo_total[] = grupo_a + grupo_b // [1, 2, 3, 4]
+   ```
+3. **Operadores Aritméticos:**
+
+   | Operador | Operación | Tipo de resultado | Ejemplo |
+   | :---: | :--- | :--- | :--- |
+   | `+` `-` `*` | Suma, resta, multiplicación | `ENTERO` si ambos operandos son `ENTERO`; si no, el tipo numérico mayor | `7 * 2` → `14` |
+   | `/` | División real | `REAL` (`FLOTANTE` si interviene un `FLOTANTE`) | `10 / 4` → `2.5` |
+   | `//` | **División entera** (redondea hacia abajo, hacia −∞) | Siempre `ENTERO` | `10 // 3` → `3`, `-7 // 2` → `-4` |
+   | `%` | **Módulo** (resto de la división entera) | `ENTERO` | `10 % 3` → `1` |
+
+   - `//` y `%` exigen operandos numéricos; si algún operando es `FLOTANTE` o `REAL`, su parte decimal se descarta antes de operar (`7.5 // 2` → `3`).
+   - Ambos arrojan un error claro en tiempo de ejecución ante **división por cero** (`División por cero.` / `Módulo por cero.`).
+   - `%` es equivalente como operador infijo a la función incorporada `MOD(a, b)`.
+   - `//` convive con los comentarios de línea. El lexer lo interpreta como **comentario** cuando aparece al inicio de una línea, tras una palabra clave/declaración, o cuando lo que sigue es texto libre (`IMPRIMIR(10 // 3)  // esto es un comentario`), y como **división entera** cuando está entre dos operandos (`p // columnas`).
+   ```text
+   ENTERO filas = 3
+   ENTERO p = 7
+   IMPRIMIR(p // filas)   // 2  (fila)
+   IMPRIMIR(p % filas)    // 1  (columna)
+   IMPRIMIR(p / filas)    // 2.3333... (división real)
+   ```
+4. **Promoción Numérica:**
+   `ENTERO` se promueve automáticamente a `REAL` o `FLOTANTE` en operaciones matemáticas mixtas.
+
+---
+
+## 📜 Sintaxis y Gramática Canónica
+
+### 1. Estructura General del Programa
+
+Los programas pueden envolverse en un bloque `INICIO ... FIN` o declarar funciones y lógica directamente en el archivo:
+
+```text
+INICIO
+    // Código principal
+    IMPRIMIR("¡Hola, mundo desde YAGUARETÉ!")
+FIN
+```
+
+*Comentarios soportados:*
+```text
+// Este es un comentario de una sola línea con doble barra
+# También se admite comentario de línea con numeral
+
+/* Comentario de bloque
+   estilo C tradicional */
+
+"""
+Este es un bloque de comentarios
+multilínea o documentación de algoritmo.
+"""
+```
+
+---
+
+### 2. Funciones y Procedimientos
+
+- **Función (con valor de retorno tipado):**
+  ```text
+  FUNCION calcular_promedio(nota1: REAL, nota2: REAL): REAL
+      REAL promedio = (nota1 + nota2) / 2
+      RETORNAR promedio
+  FIN FUNCION
+  ```
+
+- **Procedimiento (sin valor de retorno):**
+  ```text
+  PROCEDIMIENTO mostrar_bienvenida(usuario: CADENA)
+      IMPRIMIR("==============================")
+      IMPRIMIR(" Bienvenido al sistema, " + usuario)
+      IMPRIMIR("==============================")
+  FIN PROCEDIMIENTO
+  ```
+
+---
+
+### 3. Estructuras de Control
+
+#### Condicional `SI` / `SINO SI` / `SINO`
+```text
+SI (edad >= 18 Y tiene_licencia == VERDADERO)
+    IMPRIMIR("Habilitado para conducir.")
+SINO SI (edad >= 16)
+    IMPRIMIR("Permiso especial requerido.")
+SINO
+    IMPRIMIR("No habilitado.")
+FIN SI
+```
+
+#### Bucle `PARA`
+```text
+PARA (ENTERO i = 0; i < 5; i++)
+    IMPRIMIR("Iteración número: " + i)
+FIN PARA
+```
+
+#### Bucle `MIENTRAS`
+```text
+ENTERO contador = 10
+MIENTRAS (contador > 0)
+    IMPRIMIR("Cuenta regresiva: " + contador)
+    contador--
+FIN MIENTRAS
+```
+
+#### Bucle `HACER ... MIENTRAS`
+```text
+ENTERO intentos = 0
+HACER
+    intentos++
+    IMPRIMIR("Intento actual: " + intentos)
+MIENTRAS (intentos < 3)
+FIN HACER
+```
+
+---
+
+### 4. Manejo de Archivos (`ARCHIVO`)
+
+YAGUARETÉ ofrece manejo estructurado de flujos de texto:
+
+```text
+// Apertura en modo "lectura", "escritura" o "anexo"
+ARCHIVO nomina = ABRIR_ARCHIVO("nomina.txt", "lectura")
+
+MIENTRAS NO nomina.findearchivo
+    CADENA linea = nomina.LEER_LINEA()
+    IMPRIMIR("Registro leído: " + linea)
+FIN MIENTRAS
+
+nomina.CERRAR_ARCHIVO()
+```
+
+Para escribir archivos:
+```text
+ARCHIVO salida = ABRIR_ARCHIVO("resultados.txt", "escritura")
+salida.ESCRIBIR_LINEA("INFORME FINAL")
+salida.ESCRIBIR_LINEA("Total procesado: $540000.00")
+salida.CERRAR_ARCHIVO()
+```
+
+---
+
+### 5. Funciones Incorporadas (Built-ins)
+
+| Función | Parámetros | Tipo Retorno | Descripción |
+| :--- | :--- | :--- | :--- |
+| `IMPRIMIR(...)` | Uno o varios valores | `VOID` | Muestra valores en la salida estándar. |
+| `ABRIR_ARCHIVO(ruta, modo)` | `CADENA`, `CADENA` | `ARCHIVO` | Abre un archivo en `"lectura"`, `"escritura"` o `"anexo"`. |
+| `ESPAR(numero)` | `ENTERO` o `REAL` | `BOOLEANO` | Retorna `VERDADERO` si el número es par. |
+| `ESIMPAR(numero)` | `ENTERO` o `REAL` | `BOOLEANO` | Retorna `VERDADERO` si el número es impar. |
+| `MOD(dividendo, divisor)` | Numéricos | `ENTERO` | Retorna el resto de la división entera. |
+
+---
+
+## 💡 Ejemplo Completo de Algoritmo
+
+A continuación, un ejemplo completo de algoritmo que procesa nóminas y calcula porcentajes:
+
+```text
+// Archivo: calcular_sueldos.yaguarete
+
+FUNCION sumar_sueldos(montos[]: REAL): REAL
+    REAL acumulado = 0
+    PARA (ENTERO i = 0; i < montos.largo; i++)
+        acumulado += montos[i]
+    FIN PARA
+    RETORNAR acumulado
+FIN FUNCION
+
+FUNCION calcular_porcentaje(porcion: REAL, total: REAL): REAL
+    SI (total == 0)
+        RETORNAR 0.0
+    FIN SI
+    RETORNAR (porcion * 100.0) / total
+FIN FUNCION
+
+PROCEDIMIENTO imprimir_informe(empleados[]: CADENA, sueldos[]: REAL)
+    REAL total_pagado = sumar_sueldos(sueldos)
+    
+    IMPRIMIR("========================================")
+    IMPRIMIR("   LIQUIDACIÓN MENSUAL DE SUELDOS       ")
+    IMPRIMIR("========================================")
+    IMPRIMIR("Total erogado: $" + total_pagado)
+    IMPRIMIR("")
+
+    PARA (ENTERO i = 0; i < empleados.largo; i++)
+        REAL tasa = calcular_porcentaje(sueldos[i], total_pagado)
+        IMPRIMIR("• " + empleados[i] + " -> $" + sueldos[i] + " (" + tasa + "%)")
+    FIN PARA
+FIN PROCEDIMIENTO
+
+INICIO
+    CADENA equipo[3] = ["Lucía Mendez", "Martín Palermo", "Julieta Rossi"]
+    REAL salarios[3] = [580000.0, 720000.0, 640000.0]
+
+    imprimir_informe(equipo, salarios)
+FIN
+```
+
+---
+
+## 🔢 Ordenar una Matriz (Selection Sort)
+
+La función `ordenar_matriz` recibe una matriz de `ENTERO` por parámetro, la ordena de menor a mayor con el algoritmo **Selection Sort** y **retorna la matriz ordenada**. La matriz original no se modifica.
+
+```text
+FUNCION ordenar_matriz(matriz[][]: ENTERO): ENTERO[][]
+    ENTERO filas = matriz.largo
+    ENTERO columnas = matriz[0].largo
+    ENTERO total = filas * columnas
+
+    // 1. Aplanar la matriz en un vector (recorrido por filas) con // y %
+    ENTERO elementos[total]
+    PARA (ENTERO posicion = 0; posicion < total; posicion++)
+        elementos[posicion] = matriz[posicion // columnas][posicion % columnas]
+    FIN PARA
+
+    // 2. Selection Sort sobre el vector
+    PARA (ENTERO i = 0; i < total - 1; i++)
+        ENTERO indice_minimo = i
+        PARA (ENTERO j = i + 1; j < total; j++)
+            SI (elementos[j] < elementos[indice_minimo])
+                indice_minimo = j
+            FIN SI
+        FIN PARA
+
+        SI (indice_minimo != i)
+            ENTERO auxiliar = elementos[i]
+            elementos[i] = elementos[indice_minimo]
+            elementos[indice_minimo] = auxiliar
+        FIN SI
+    FIN PARA
+
+    // 3. Reconstruir la matriz ordenada (la original no se modifica)
+    ENTERO resultado[filas][columnas]
+    PARA (ENTERO posicion = 0; posicion < total; posicion++)
+        resultado[posicion // columnas][posicion % columnas] = elementos[posicion]
+    FIN PARA
+
+    RETORNAR resultado
+FIN FUNCION
+
+INICIO
+    ENTERO datos[3][3] = [[9, 4, 7], [1, 8, 2], [6, 3, 5]]
+    ENTERO ordenada[][] = ordenar_matriz(datos)
+
+    PARA (ENTERO f = 0; f < ordenada.largo; f++)
+        IMPRIMIR(ordenada[f])
+    FIN PARA
+FIN
+```
+
+**Salida:**
+```text
+[1, 2, 3]
+[4, 5, 6]
+[7, 8, 9]
+```
+
+| Elemento | Detalle |
+| :--- | :--- |
+| **Parámetro** | `matriz[][]: ENTERO` — matriz de enteros de cualquier tamaño (`filas x columnas`). |
+| **Retorno** | `ENTERO[][]` — nueva matriz con las mismas dimensiones y todos sus elementos en orden ascendente por filas. |
+| **Algoritmo** | Selection Sort: en cada pasada se busca el mínimo del tramo sin ordenar y se intercambia con la posición actual. |
+| **Complejidad** | `O(n²)` con `n = filas * columnas`. |
+
+> [!NOTE]
+> Gracias a la división entera (`//`) y al módulo (`%`), un índice lineal `p` se traduce a coordenadas de matriz con `matriz[p // columnas][p % columnas]`, por lo que no hace falta anidar bucles para aplanar y reconstruir. Para ordenar de mayor a menor, cambia la comparación a `elementos[j] > elementos[indice_minimo]`.
+
+---
+
+## 🧪 Pruebas Automatizadas
+
+La suite de pruebas unitarias evalúa exhaustivamente el lexer, parser, verificador de tipos y runtime:
+
+```bash
+# Ejecutar toda la batería de tests unitarios
+python -m unittest discover tests
+```
+
+**Cobertura de pruebas:**
+- ✅ Tipado estático y compatibilidad numérica float32/float64.
+- ✅ Bucle `PARA`, `MIENTRAS`, `HACER ... MIENTRAS`.
+- ✅ Recursión, algoritmos de ordenamiento (Quicksort) y matrices.
+- ✅ Manejo de archivos y bucles de lectura sin fin de archivo.
+- ✅ Todas las estructuras canónicas definidas en `estructuras.txt`.
+
+---
+
+## 👤 Autoría y Créditos
+
+<div align="center">
+
+| Concepto | Detalle |
+| :--- | :--- |
+| **Lenguaje** | **YAGUARETÉ** (Pseudocódigo Fuertemente Tipado) |
+| **Autor** | **[Facu Falcone](mailto:a.facundo.falcone@gmail.com)** |
+| **Repositorio** | [`caidevOficial/Yaguarete_Lang`](https://github.com/caidevOficial/Yaguarete_Lang) |
+| **Licencia** | [GNU General Public License v3.0 (GPL-3.0-or-later)](./LICENSE) |
+| **Copyright** | © 2026 Facu Falcone. All rights reserved. |
+
+</div>
+
+---
+
+## 📜 Licencia
+
+Este proyecto está licenciado bajo los términos de la **GNU General Public License v3.0 (GPL-3.0-or-later)**.
+Garantiza la libertad de uso, estudio, modificación y redistribución del software, protegiendo los derechos de autoría y asegurando que cualquier obra derivada permanezca libre y de código abierto (copyleft fuerte).
+
+Para más detalles, consulte el archivo [LICENSE](./LICENSE).
+
+<p align="center">
+  Diseñado con dedicación para impulsar la enseñanza y la práctica rigurosa de la algoritmia. 🚀
+</p>
