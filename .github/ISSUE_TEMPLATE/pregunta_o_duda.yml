@@ -1,0 +1,46 @@
+name: "❓ Consulta de Sintaxis / Pregunta"
+description: "Pregunta sobre cómo estructurar un algoritmo o resuelve dudas sobre el pseudocódigo"
+title: "[Consulta]: "
+labels: ["question", "ayuda"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¿Tienes dudas sobre cómo implementar un algoritmo o las reglas sintácticas de **YAGUARETÉ**?
+        ¡Estamos aquí para orientarte! También te sugerimos revisar la [Wiki Oficial](https://github.com/caidevOficial/Yaguarete_Lang/wiki) donde encontrarás el manual de referencia completo.
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Tema Principal
+      description: ¿A qué concepto algorítmico corresponde tu consulta?
+      options:
+        - "Estructuras de Control (SI, SEGUN, MIENTRAS, PARA, REPETIR)"
+        - "Tipos de Datos Primitivos (ENTERO, REAL, CADENA, CARACTER, BOOLEANO)"
+        - "Vectores y Matrices Multidimensionales"
+        - "Pilas y Colas Dinámicas (LIFO / FIFO)"
+        - "Estructuras Personalizadas y Punteros NULO"
+        - "Manejo de Archivos en Disco (ARCHIVO, ABRIR_ARCHIVO)"
+        - "Subprogramas (FUNCION con retorno, PROCEDIMIENTO)"
+        - "Uso de la CLI o Depuración Paso a Paso en VS Code"
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Detalle de tu Consulta
+      description: Explica qué deseas lograr y cuál es la duda o dificultad que encuentras.
+      placeholder: "Estoy queriendo enlazar dos nodos autorreferenciales pero..."
+    validations:
+      required: true
+  - type: textarea
+    id: current_code
+    attributes:
+      label: Código Actual (.yaguarete)
+      description: Comparte el código de pseudocódigo en el que estás trabajando.
+      placeholder: |
+        INICIO
+            // Tu código aquí
+        FIN
+      render: yaguarete
+    validations:
+      required: false

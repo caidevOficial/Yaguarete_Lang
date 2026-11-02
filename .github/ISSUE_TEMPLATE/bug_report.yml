@@ -1,0 +1,92 @@
+name: "🐛 Reporte de Bug / Error"
+description: "Reporta un problema o comportamiento inesperado en el compilador o herramientas de YAGUARETÉ"
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Gracias por tomarte el tiempo de reportar este problema! Tu reporte ayuda a hacer más robusto a **YAGUARETÉ**.
+        Antes de crear este reporte, por favor verifica si el problema ya fue reportado en los [Issues existentes](https://github.com/caidevOficial/Yaguarete_Lang/issues) o documentado en la [Wiki Oficial](https://github.com/caidevOficial/Yaguarete_Lang/wiki).
+  - type: dropdown
+    id: component
+    attributes:
+      label: Componente Afectado
+      description: Selecciona el componente del ecosistema donde ocurre el fallo.
+      options:
+        - "Motor Nativo (Core / Intérprete en Rust)"
+        - "CLI / Consola Interactiva (yaguarete run, yaguarete repl)"
+        - "Depurador DAP (Debug Adapter Protocol)"
+        - "Extensión Oficial para VS Code / Antigravity"
+        - "Instalador Gráfico de Windows (Instalador_Yaguarete.exe)"
+        - "Documentación / Wiki"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión de YAGUARETÉ
+      description: Versión exacta obtenida ejecutando `yaguarete --version`.
+      placeholder: "Ej: 0.1.1"
+      value: "0.1.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Sistema Operativo
+      description: Plataforma y arquitectura donde se ejecuta.
+      options:
+        - "Windows 11 (x64)"
+        - "Windows 10 (x64)"
+        - "Linux Ubuntu / Debian (x64)"
+        - "Linux Fedora / Arch (x64)"
+        - "Otro (detallar en la descripción)"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción del Problema
+      description: Explica de manera clara y concisa qué sucedió y qué esperabas que sucediera.
+      placeholder: "Al ejecutar una estructura de datos autorreferencial con punteros NULO..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction_code
+    attributes:
+      label: Código Mínimo Reproducible (.yaguarete)
+      description: Un script de pseudocódigo mínimo y completo que permita reproducir el error directamente con `yaguarete run`.
+      placeholder: |
+        INICIO
+            CADENA nombre
+            nombre = "Prueba"
+            IMPRIMIR(nombre)
+        FIN
+      render: yaguarete
+    validations:
+      required: true
+  - type: textarea
+    id: output_logs
+    attributes:
+      label: Mensaje de Error / Salida de Terminal
+      description: Copia y pega la salida de error devuelta por la consola de YAGUARETÉ.
+      placeholder: "Error en tiempo de ejecución [Línea X, Columna Y]: ..."
+      render: text
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Comportamiento Esperado
+      description: Describe el resultado que el algoritmo debería haber producido.
+      placeholder: "El programa debería haber impreso el resultado sin terminar abruptamente..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Verificaciones
+      options:
+        - label: "He buscado en los [Issues abiertos y cerrados](https://github.com/caidevOficial/Yaguarete_Lang/issues) para evitar duplicados."
+          required: true
+        - label: "Estoy utilizando la versión oficial 0.1.1 o superior."
+          required: true

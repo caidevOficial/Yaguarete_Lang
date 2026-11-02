@@ -1,0 +1,61 @@
+name: "💡 Propuesta de Mejora / Feature Request"
+description: "Sugiere una nueva funcionalidad, palabra clave, operador o mejora para YAGUARETÉ"
+title: "[Propuesta]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Gracias por querer contribuir a la evolución de **YAGUARETÉ**!
+        Las propuestas orientadas a mejorar la claridad didáctica, el rendimiento o la expresividad del pseudocódigo son muy valoradas.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área o Módulo
+      description: ¿Qué área del lenguaje o herramientas abarca tu propuesta?
+      options:
+        - "Sintaxis del Lenguaje (Nuevas palabras clave o estructuras de control)"
+        - "Tipos de Datos y Operadores"
+        - "Estructuras Dinámicas (Pilas, Colas, Listas, Árboles)"
+        - "Librería Estándar (Funciones Matemáticas, Cadenas, Archivos)"
+        - "CLI / Consola Interactiva REPL"
+        - "Depurador DAP y Extensión para VS Code"
+        - "Instalador y Experiencia de Usuario (DX)"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: ¿Qué problema o limitación resuelve tu propuesta?
+      description: Explica qué necesidad o dificultad enfrentas actualmente al programar en YAGUARETÉ.
+      placeholder: "Actualmente, al querer manipular cadenas de caracteres para..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Solución o Comportamiento Propuesto
+      description: Describe cómo debería funcionar la nueva característica, idealmente con un ejemplo en pseudocódigo.
+      placeholder: |
+        INICIO
+            // Ejemplo de la sintaxis propuesta
+        FIN
+      render: yaguarete
+    validations:
+      required: true
+  - type: textarea
+    id: pedagogical_value
+    attributes:
+      label: Valor Pedagógico y Educativo
+      description: ¿De qué manera esta propuesta ayuda a estudiantes y docentes a aprender o enseñar algoritmos?
+      placeholder: "Facilita la comprensión de conceptos como..."
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas Consideradas
+      description: ¿Has considerado formas alternativas de lograr esto con la sintaxis actual?
+      placeholder: "Una alternativa sin modificar el compilador sería..."
+    validations:
+      required: false

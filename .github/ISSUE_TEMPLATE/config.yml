@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "🛡️ Reporte de Vulnerabilidad de Seguridad"
+    url: "https://github.com/caidevOficial/Yaguarete_Lang/security/advisories/new"
+    about: "Si descubriste una vulnerabilidad de seguridad confidencial, repórtala de forma privada bajo nuestra Política de Seguridad."
+  - name: "📚 Wiki Oficial y Guía de Referencia"
+    url: "https://github.com/caidevOficial/Yaguarete_Lang/wiki"
+    about: "Consulta la documentación completa: tipos de datos, estructuras de control, pilas, colas, archivos y ejemplos."
+  - name: "🌐 Sitio Web Oficial de YAGUARETÉ"
+    url: "https://caidevoficial.github.io/Yaguarete_Lang_Web/"
+    about: "Descargas oficiales de instaladores todo-en-uno para Windows y paquetes nativos para Linux."
