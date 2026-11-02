@@ -65,7 +65,7 @@ Permite escribir algoritmos estructurados con palabras clave naturales en españ
 ## ✨ Características Principales
 
 - 🛡️ **Fuertemente Tipado:** Validación estática de variables, firmas de funciones, aridad y tipos de retorno.
-- 🚀 **Motor Nativo en Rust (v2.0):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad (~300x más rápido en algoritmos complejos: QuickSort en 1 ms frente a 3.240 ms previos) y cero dependencias de runtime.
+- 🚀 **Motor Nativo en Rust (v0.1.1):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad (~300x más rápido en algoritmos complejos: QuickSort en 1 ms frente a 3.240 ms previos) y cero dependencias de runtime.
 - 💻 **Consola Interactiva REPL:** Nuevo entorno interactivo `yaguarete repl` para evaluar expresiones y algoritmos didácticos al vuelo con tabla de variables (`:vars`) y balanceo multilínea.
 - 📐 **Precisión Numérica Determinística:** Distinción clara entre `FLOTANTE` (IEEE 754 de 32 bits) y `REAL` (IEEE 754 de 64 bits de doble precisión).
 - 🧩 **Arreglos Dinámicos y Matrices:** Vectores (`TIPO[]`) y matrices bidimensionales (`TIPO[][]`) con introspección mediante la propiedad `.largo` y concatenación con el operador `+`.
@@ -289,7 +289,7 @@ yaguarete update --silent
 > **Notificación Automática de Versión:**
 > Al igual que `pip` en Python, cada vez que ejecutas un programa o módulo de YAGUARETÉ, el sistema comprueba en segundo plano (sin ralentizar la ejecución) si hay una nueva versión disponible y te avisará al finalizar con la instrucción para actualizar:
 > ```text
-> [AVISO] Hay una nueva versión de YAGUARETÉ disponible: 1.8.0 -> 1.9.0
+> [AVISO] Hay una nueva versión de YAGUARETÉ disponible: 0.1.0 -> 0.1.1
 > Para actualizar automáticamente, ejecuta: yaguarete update
 > ```
 
@@ -312,8 +312,8 @@ El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` 
 ### Funcionalidades:
 - 🐆 **Tema de Iconos Oficial "Jaguar Gamer" (v0.1.1):** Set completo de iconos con la nueva identidad estilizada azul eléctrica en `extension-vscode/icons/` (`yaguarete-file.svg`, `yaguarete-file.png`).
 - 🌈 **Color de Sintaxis TextMate Avanzado:** Gramática completa para palabras clave, tipos de datos primitivos, cadenas, números y comentarios (`//`, `#` y `/* */`).
-- 🏛️ **Coloreado de Estructuras Personalizadas (v2.0.1):** Resaltado distintivo (verde menta/turquesa) para tipos de estructuras en parámetros (`nodo: Pila`), valores de retorno (`(): NodoCliente`) y arreglos de estructuras (`Pila[]`, `NodoCliente[10]`).
-- 💡 **IntelliSense y Autocompletado Prioritario (v2.0.1):**
+- 🏛️ **Coloreado de Estructuras Personalizadas (v0.1.1):** Resaltado distintivo (verde menta/turquesa) para tipos de estructuras en parámetros (`nodo: Pila`), valores de retorno (`(): NodoCliente`) y arreglos de estructuras (`Pila[]`, `NodoCliente[10]`).
+- 💡 **IntelliSense y Autocompletado Prioritario (v0.1.1):**
   - **Funciones y Procedimientos**: Despliegue inmediato al tipear con firma de parámetros completa y tipos de retorno, priorizadas en el primer lugar de sugerencias (`sortText`).
   - **Soporte Multi-Módulo**: Indexa funciones y procedimientos a través de todos los archivos `.yaguarete` abiertos en el workspace.
   - **Variables y Parámetros en Ámbito**: Sugerencias automáticas de variables locales, parámetros y contadores de bucle `PARA`.
@@ -443,7 +443,7 @@ FIN
 
 ### 🔗 Estructuras Autorreferenciales y Tipo `NULO` (Listas y Punteros)
 
-A partir de la versión **1.6**, YAGUARETÉ cuenta con soporte para **estructuras autorreferenciales** (estructuras que contienen campos de su mismo tipo) y el tipo/literal universal **`NULO`** (equivalente a `null` o `None`).
+YAGUARETÉ cuenta con soporte nativo para **estructuras autorreferenciales** (estructuras que contienen campos de su mismo tipo) y el tipo/literal universal **`NULO`** (equivalente a `null` o `None`).
 
 Esto permite construir y manipular estructuras de datos dinámicas avanzadas como **Listas Enlazadas, Pilas, Colas y Árboles**.
 
