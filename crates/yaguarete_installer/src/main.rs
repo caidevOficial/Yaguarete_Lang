@@ -131,7 +131,7 @@ impl eframe::App for InstallerApp {
             }
         }
 
-        // Configuración de paleta oficial Dark Electric Blue & Jaguar Gamer (YAGUARETÉ 0.1.1)
+        // Configuración de paleta oficial Dark Electric Blue & Jaguar Gamer (YAGUARETÉ 0.1.2)
         let mut visuals = egui::Visuals::dark();
         visuals.panel_fill = Color32::from_rgb(8, 12, 20); // #080c14 base noche espacial
         visuals.window_fill = Color32::from_rgb(8, 12, 20);
@@ -233,7 +233,7 @@ impl eframe::App for InstallerApp {
                                 .inner_margin(Margin { left: 8.0, right: 8.0, top: 2.0, bottom: 2.0 })
                                 .show(ui, |ui| {
                                     ui.label(
-                                        RichText::new("v0.1.1")
+                                        RichText::new(format!("v{}", YAGUARETE_VERSION))
                                             .size(11.0)
                                             .strong()
                                             .color(Color32::from_rgb(224, 242, 254)),
@@ -335,7 +335,7 @@ impl eframe::App for InstallerApp {
 
                         if ui
                             .add_enabled(!self.is_busy, install_btn)
-                            .on_hover_text("Inicia la instalación completa de YAGUARETÉ 0.1.1 y su extensión")
+                            .on_hover_text(format!("Inicia la instalación completa de YAGUARETÉ {} y su extensión", YAGUARETE_VERSION))
                             .clicked()
                         {
                             self.start_installation();
@@ -501,7 +501,7 @@ impl eframe::App for InstallerApp {
                                 let _ = Command::new("powershell.exe")
                                     .arg("-NoExit")
                                     .arg("-Command")
-                                    .arg("yaguarete --version; Write-Host ''; Write-Host '¡YAGUARETÉ 0.1.1 está listo para ser utilizado!' -ForegroundColor Cyan")
+                                    .arg(format!("yaguarete --version; Write-Host ''; Write-Host '¡YAGUARETÉ {} está listo para ser utilizado!' -ForegroundColor Cyan", YAGUARETE_VERSION))
                                     .spawn();
                             }
                         });
@@ -1370,11 +1370,13 @@ fn main() -> eframe::Result<()> {
         }
     });
 
+    let app_title = format!("Instalador YAGUARETÉ v{} & Extensión para Visual Studio Code", YAGUARETE_VERSION);
+
     let mut viewport = egui::ViewportBuilder::default()
         .with_inner_size([880.0, 640.0])
         .with_min_inner_size([840.0, 600.0])
         .with_resizable(true)
-        .with_title("Instalador YAGUARETÉ v0.1.1 & Extensión para Visual Studio Code");
+        .with_title(&app_title);
 
     if let Some(icon) = icon_data {
         viewport = viewport.with_icon(icon);
@@ -1386,7 +1388,7 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "Instalador YAGUARETÉ v0.1.1 & Extensión para Visual Studio Code",
+        &app_title,
         options,
         Box::new(|_cc| Ok(Box::new(InstallerApp::default()))),
     )
