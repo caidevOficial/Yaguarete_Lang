@@ -25,3 +25,7 @@ release_notes.md
 
 # Rust build target
 target/
+
+
+# Backup folders
+backup_*/

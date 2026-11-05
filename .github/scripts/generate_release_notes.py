@@ -22,14 +22,20 @@ import unittest
 
 
 def get_version(repo_root: str) -> str:
-    """Extrae la versión desde pseudocode/__init__.py."""
+    """Extrae la versión canónica desde crates/yaguarete_cli/Cargo.toml o pseudocode/__init__.py."""
+    cli_cargo = os.path.join(repo_root, "crates", "yaguarete_cli", "Cargo.toml")
+    if os.path.exists(cli_cargo):
+        with open(cli_cargo, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("version ="):
+                    return line.split("=")[1].strip().strip('"').strip("'")
     init_path = os.path.join(repo_root, "pseudocode", "__init__.py")
     if os.path.exists(init_path):
         with open(init_path, "r", encoding="utf-8") as f:
             for line in f:
                 if line.startswith("__version__"):
                     return line.split("=")[1].strip().strip('"').strip("'")
-    return "1.9.0"
+    return "0.1.2"
 
 
 def calculate_sha256(filepath: str) -> str:

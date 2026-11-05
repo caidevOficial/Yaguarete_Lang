@@ -36,8 +36,8 @@ from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 
 # Versión oficial del instalador y del lenguaje YAGUARETÉ
-APP_VERSION = "0.1.1"
-APP_VERSION_FULL = "0.1.1"
+APP_VERSION = "0.1.2"
+APP_VERSION_FULL = "0.1.2"
 
 # ============================================================================
 # Paleta Visual Oficial YAGUARETÉ 2.X (Dark Electric Blue & Jaguar Gamer)

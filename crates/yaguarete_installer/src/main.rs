@@ -42,7 +42,7 @@ const YAGUARETE_ICON_BYTES: &[u8] = include_bytes!("../../../yaguarete_icon.ico"
 const YAGUARETE_ICON_PNG_BYTES: &[u8] = include_bytes!("../../../yaguarete_icon.png");
 #[allow(dead_code)]
 const YAGUARETE_LOGO_BYTES: &[u8] = include_bytes!("../../../yaguarete_logo_header.png");
-const VSCODE_VSIX_BYTES: &[u8] = include_bytes!("../../../extension-vscode/yaguarete-language-support-0.1.1.vsix");
+const VSCODE_VSIX_BYTES: &[u8] = include_bytes!("../../../extension-vscode/yaguarete-language-support-0.1.2.vsix");
 const YAGUARETE_VERSION: &str = "0.1.2";
 
 fn current_time_str() -> String {
