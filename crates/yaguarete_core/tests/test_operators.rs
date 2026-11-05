@@ -179,3 +179,59 @@ fn test_comentarios_con_hash_en_lineas_independientes() {
     let out = run_code(code, false).unwrap();
     assert_eq!(out, vec!["VAL: 42"]);
 }
+
+#[test]
+fn test_cortocircuito_operador_y() {
+    // 1. Evita división por cero si la parte izquierda es falsa
+    let code_div_cero = r#"
+    INICIO
+        BOOLEANO cond = FALSO Y (10 / 0 == 0)
+        IMPRIMIR("COND: " + cond)
+    FIN
+    "#;
+    let out = run_code(code_div_cero, false).unwrap();
+    assert_eq!(out, vec!["COND: FALSO"]);
+
+    // 2. Evita desbordamiento de índice si la parte izquierda es falsa (patrón de guarda)
+    let code_indice = r#"
+    INICIO
+        ENTERO v[3] = [10, 20, 30]
+        ENTERO j = -1
+        SI (j >= 0 Y v[j] > 0)
+            IMPRIMIR("DENTRO")
+        SINO
+            IMPRIMIR("FUERA")
+        FIN SI
+    FIN
+    "#;
+    let out_idx = run_code(code_indice, false).unwrap();
+    assert_eq!(out_idx, vec!["FUERA"]);
+}
+
+#[test]
+fn test_cortocircuito_operador_o() {
+    // 1. Evita división por cero si la parte izquierda es verdadera
+    let code_div_cero = r#"
+    INICIO
+        BOOLEANO cond = VERDADERO O (10 / 0 == 0)
+        IMPRIMIR("COND: " + cond)
+    FIN
+    "#;
+    let out = run_code(code_div_cero, false).unwrap();
+    assert_eq!(out, vec!["COND: VERDADERO"]);
+
+    // 2. Evita desbordamiento de índice si la parte izquierda es verdadera
+    let code_indice = r#"
+    INICIO
+        ENTERO v[3] = [10, 20, 30]
+        ENTERO j = -1
+        SI (j < 0 O v[j] == 0)
+            IMPRIMIR("SEGURO")
+        SINO
+            IMPRIMIR("INSEGURO")
+        FIN SI
+    FIN
+    "#;
+    let out_idx = run_code(code_indice, false).unwrap();
+    assert_eq!(out_idx, vec!["SEGURO"]);
+}

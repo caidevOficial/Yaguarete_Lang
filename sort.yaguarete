@@ -85,7 +85,25 @@ FIN FUNCION
         FIN SI
     FIN FUNCION
 
-ENTERO size = 20000
+    FUNCION insercion(vector[]: ENTERO): ENTERO[]
+        ENTERO n = vector.largo
+        ENTERO key = 0
+        ENTERO i = 0
+        ENTERO j = 0
+        PARA(i = 1; i < n; i++)
+            key = vector[i]
+            j = i - 1
+
+            MIENTRAS(j >= 0 Y vector[j] > key)
+                vector[j+1] = vector[j]
+                j = j - 1
+            FIN MIENTRAS
+            vector[j+1] = key
+        FIN PARA
+        RETORNAR vector
+    FIN FUNCION
+
+ENTERO size = 10
 ENTERO vector[size]
 
 PARA(ENTERO i = size; i > 0; i--)
@@ -93,7 +111,8 @@ PARA(ENTERO i = size; i > 0; i--)
 FIN PARA
 
 // Ejecutar Quicksort optimizado
-vector = ordenar_vector_asc_quick(vector)
+// vector = ordenar_vector_asc_quick(vector)
+vector = insercion(vector)
 
 // Opcional: Probar Selection Sort descomentando la siguiente línea:
 // vector = ORDENAR(vector)

@@ -18,7 +18,7 @@ pub use value::Value;
 use std::fs;
 use std::path::Path;
 
-pub const VERSION: &str = "0.1.1";
+pub const VERSION: &str = "0.1.2";
 
 pub fn run_code(source: &str, lenient: bool) -> Result<Vec<String>, YaguareteError> {
     let mut lexer = Lexer::new(source);

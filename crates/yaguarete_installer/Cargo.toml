@@ -1,6 +1,6 @@
 [package]
 name = "yaguarete_installer"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Facu Falcone <a.facundo.falcone@gmail.com>"]
 description = "Instalador Gráfico Todo-en-Uno para YAGUARETÉ en Rust"

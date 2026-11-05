@@ -876,9 +876,29 @@ impl Interpreter {
                 }
             }
             Expression::Binary { left, op, right } => {
-                let left_val = self.eval_expression(left)?;
-                let right_val = self.eval_expression(right)?;
-                self.eval_binary_op(&left_val, *op, &right_val)
+                match op {
+                    BinaryOp::Y => {
+                        let left_val = self.eval_expression(left)?;
+                        if !left_val.is_truthy() {
+                            return Ok(Value::Booleano(false));
+                        }
+                        let right_val = self.eval_expression(right)?;
+                        Ok(Value::Booleano(right_val.is_truthy()))
+                    }
+                    BinaryOp::O => {
+                        let left_val = self.eval_expression(left)?;
+                        if left_val.is_truthy() {
+                            return Ok(Value::Booleano(true));
+                        }
+                        let right_val = self.eval_expression(right)?;
+                        Ok(Value::Booleano(right_val.is_truthy()))
+                    }
+                    _ => {
+                        let left_val = self.eval_expression(left)?;
+                        let right_val = self.eval_expression(right)?;
+                        self.eval_binary_op(&left_val, *op, &right_val)
+                    }
+                }
             }
             Expression::Unary { op, expr } => {
                 let val = self.eval_expression(expr)?;

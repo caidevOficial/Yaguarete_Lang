@@ -5,6 +5,23 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ---
 
+## [0.1.2] - 2026-11-05
+
+### ⚡ Motor de Ejecución y Lenguaje (`yaguarete_core`)
+- **Evaluación en Cortocircuito para Operadores Lógicos (`Y`, `O`):**
+  - Implementación de evaluación en cortocircuito (*short-circuit evaluation*) en el evaluador de expresiones binarias (`eval.rs`).
+  - Para el operador `Y`: si el operando izquierdo es falso, el operando derecho no se evalúa, retornando `FALSO` de forma inmediata.
+  - Para el operador `O`: si el operando izquierdo es verdadero, el operando derecho no se evalúa, retornando `VERDADERO` de forma inmediata.
+  - Habilita patrones idiomáticos de guarda y comprobación segura en algoritmos (evita desbordamientos de índice como `MIENTRAS(j >= 0 Y vector[j] > key)` y división por cero o errores en evaluación de punteros/nulos).
+  - Incorporación de tests unitarios de regresión en `crates/yaguarete_core/tests/test_operators.rs` (`test_cortocircuito_operador_y` y `test_cortocircuito_operador_o`).
+
+### ⚙️ Sincronización Integral de Versiones a v0.1.2
+- Sincronización de versión a `0.1.2` en todos los crates de Rust (`crates/yaguarete_core`, `crates/yaguarete_cli`, `crates/yaguarete_installer`).
+- Actualización de metadatos de versión en cabecera PE de Windows (`FileVersion` y `ProductVersion` a `0.1.2.0`) en `build.rs` y archivos descriptores.
+- Actualización de tests del CLI en `crates/yaguarete_cli/tests/test_cli.rs` para validar el banner `YAGUARETÉ (v0.1.2)`.
+
+---
+
 ## [0.1.1] - 2026-10-30
 
 ### 🐆 Primer Release Oficial de YAGUARETÉ: Identidad "Jaguar Gamer" & Electric Blue
