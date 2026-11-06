@@ -10,10 +10,10 @@
 
 <p align="center">
   <a href="#-autoría-y-créditos"><img src="https://img.shields.io/badge/Autor-%3CFacu%20Falcone%3E-0f172a?style=for-the-badge" alt="Autor" /></a>
-  <img src="https://img.shields.io/badge/Versi%C3%B3n-0.1.1-0066ff?style=for-the-badge" alt="Versión" />
+  <img src="https://img.shields.io/badge/Versi%C3%B3n-0.1.2-0066ff?style=for-the-badge" alt="Versión" />
   <img src="https://img.shields.io/badge/Extensi%C3%B3n-.yaguarete-38bdf8?style=for-the-badge" alt="Extensión .yaguarete" />
   <img src="https://img.shields.io/badge/VS_Code-Extensi%C3%B3n_Oficial-1e3a8a?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="VS Code Extension" />
-  <img src="https://img.shields.io/badge/Tests-82%20passing-22c55e?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-87%20passing-22c55e?style=for-the-badge" alt="Tests" />
   <img src="https://img.shields.io/badge/Licencia-GPL--3.0-2563eb?style=for-the-badge" alt="Licencia GPL-3.0" />
 </p>
 
@@ -65,7 +65,8 @@ Permite escribir algoritmos estructurados con palabras clave naturales en españ
 ## ✨ Características Principales
 
 - 🛡️ **Fuertemente Tipado:** Validación estática de variables, firmas de funciones, aridad y tipos de retorno.
-- 🚀 **Motor Nativo en Rust (v0.1.1):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad (~300x más rápido en algoritmos complejos: QuickSort en 1 ms frente a 3.240 ms previos) y cero dependencias de runtime.
+- 🚀 **Motor Nativo en Rust (v0.1.2):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad (~300x más rápido en algoritmos complejos: QuickSort en 1 ms frente a 3.240 ms previos) y cero dependencias de runtime.
+- ⚡ **Evaluación en Cortocircuito (v0.1.2):** Operadores lógicos `Y` y `O` con evaluación en cortocircuito (*short-circuit evaluation*), permitiendo guardas seguras en bucles y estructuras sin evaluaciones innecesarias ni desbordamientos de índice.
 - 💻 **Consola Interactiva REPL:** Nuevo entorno interactivo `yaguarete repl` para evaluar expresiones y algoritmos didácticos al vuelo con tabla de variables (`:vars`) y balanceo multilínea.
 - 📐 **Precisión Numérica Determinística:** Distinción clara entre `FLOTANTE` (IEEE 754 de 32 bits) y `REAL` (IEEE 754 de 64 bits de doble precisión).
 - 🧩 **Arreglos Dinámicos y Matrices:** Vectores (`TIPO[]`) y matrices bidimensionales (`TIPO[][]`) con introspección mediante la propiedad `.largo` y concatenación con el operador `+`.
@@ -108,10 +109,10 @@ YAGUARETÉ ofrece paquetes oficiales nativos y universales para entornos Linux:
 Recomendado para **Ubuntu, Debian, Linux Mint, Pop!_OS, Kali Linux** y derivados:
 ```bash
 # Instalación con apt (resuelve dependencias automáticamente)
-sudo apt install ./yaguarete_0.1.1_amd64.deb
+sudo apt install ./yaguarete_0.1.2_amd64.deb
 
 # O mediante dpkg:
-# sudo dpkg -i yaguarete_0.1.1_amd64.deb
+# sudo dpkg -i yaguarete_0.1.2_amd64.deb
 ```
 Este paquete instala el binario en `/usr/bin/yaguarete`, registra la asociación MIME del archivo `.yaguarete`, el icono del lenguaje y la entrada de escritorio para aplicaciones del sistema.
 
@@ -119,8 +120,8 @@ Este paquete instala el binario en `/usr/bin/yaguarete`, registra la asociación
 Compatible con cualquier distribución (Arch Linux, Fedora, openSUSE, Gentoo, Alpine, etc.):
 ```bash
 # Descomprimir el paquete
-tar -xzf yaguarete-0.1.1-linux-x64.tar.gz
-cd yaguarete-0.1.1-linux-x64
+tar -xzf yaguarete-0.1.2-linux-x86_64.tar.gz
+cd yaguarete-0.1.2-linux-x86_64
 
 # Instalación para el usuario actual (~/.local/bin):
 chmod +x install.sh
@@ -303,7 +304,7 @@ yaguarete tokens mi_algoritmo.yaguarete
 
 ## 🎨 Extensión Oficial para Visual Studio Code
 
-El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` (disponible como paquete `yaguarete-language-support-0.1.1.vsix`):
+El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` (disponible como paquete `yaguarete-language-support-0.1.2.vsix`):
 
 <p align="center">
   <img src="yaguarete_icon.png" width="80" alt="VS Code Extension" />
@@ -327,7 +328,7 @@ El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` 
 
 #### Instalación Manual de la Extensión:
 ```bash
-code --install-extension extension-vscode/yaguarete-language-support-0.1.1.vsix --force
+code --install-extension extension-vscode/yaguarete-language-support-0.1.2.vsix --force
 ```
 
 ---

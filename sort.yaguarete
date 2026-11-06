@@ -1,7 +1,7 @@
 INICIO
 
 // ordena mediante algoritmo de selection sort
-FUNCION ORDENAR(a[]: ENTERO):ENTERO[]
+FUNCION selection(a[]: ENTERO):ENTERO[]
     ENTERO size = a.largo
     PARA(ENTERO i = 0; i < size - 1; i++)
         ENTERO indice_menor = i
@@ -103,7 +103,7 @@ FIN FUNCION
         RETORNAR vector
     FIN FUNCION
 
-ENTERO size = 10
+ENTERO size = 10000
 ENTERO vector[size]
 
 PARA(ENTERO i = size; i > 0; i--)
@@ -112,10 +112,10 @@ FIN PARA
 
 // Ejecutar Quicksort optimizado
 // vector = ordenar_vector_asc_quick(vector)
-vector = insercion(vector)
+// vector = insercion(vector)
 
 // Opcional: Probar Selection Sort descomentando la siguiente línea:
-// vector = ORDENAR(vector)
+vector = selection(vector)
 
 IMPRIMIR("Total elementos ordenados: " + vector.largo)
 IMPRIMIR("Primer elemento: " + vector[0] + " | Ultimo elemento: " + vector[vector.largo - 1])
