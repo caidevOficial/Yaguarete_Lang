@@ -47,6 +47,7 @@ pub enum TokenType {
     Div,         // /
     DivEntera,   // //
     Mod,         // %
+    Potencia,    // ^
     Inc,         // ++
     Dec,         // --
 

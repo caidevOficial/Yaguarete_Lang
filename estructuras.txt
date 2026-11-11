@@ -221,3 +221,31 @@ MIENTRAS actual != NULO
     actual = actual.proximo_nodo
 FIN MIENTRAS
 
+// FUNCIONES INCORPORADAS: ENTRADA, CADENAS, CONVERSION Y MATEMATICAS
+// LEER() / LEER(mensaje): autoparsea -> BOOLEANO, ENTERO, REAL o CADENA
+// (el mensaje se imprime sin salto de linea; no disponible en el depurador DAP)
+ENTERO edad = LEER("Edad: ")
+CADENA nombre = LEER()
+
+// Cadenas
+CADENA a = MAYUSCULAS("hola")            // "HOLA"
+CADENA b = MINUSCULAS("HOLA")            // "hola"
+CADENA c = RECORTAR("  hola  ")          // "hola"
+CADENA partes[] = DIVIDIR_CADENA("a,b,c", ",")   // separador no vacio
+
+// Conversion
+ENTERO n = A_ENTERO("42")                // trunca decimales / parsea cadenas
+REAL r = A_REAL("3.5")
+FLOTANTE f = A_FLOTANTE(2)
+CADENA t = A_CADENA(n)
+BOOLEANO v = A_BOOLEANO("VERDADERO")     // numeros: != 0 es verdadero
+
+// Matematicas
+ENTERO menor = MIN(3, 7)                 // ENTERO si ambos son ENTERO, si no REAL
+REAL mayor = MAX(2.5, 1)
+ENTERO e1 = REDONDEAR(2.5)               // 3  (half-away-from-zero: -2.5 -> -3)
+REAL e2 = REDONDEAR(3.14159, 2)          // 3.14
+REAL p = POTENCIA(2, 8)                  // equivale a 2 ^ 8
+REAL h = RAIZCUADRADA(16)
+ENTERO m = ABS(-5)
+ENTERO d = ALEATORIO(1, 6)

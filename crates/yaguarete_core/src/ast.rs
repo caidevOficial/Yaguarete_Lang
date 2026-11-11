@@ -43,6 +43,7 @@ pub enum BinaryOp {
     Div,
     DivEntera,
     Mod,
+    Potencia,
     IgualQue,
     Distinto,
     Menor,

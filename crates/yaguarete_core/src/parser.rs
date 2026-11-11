@@ -781,7 +781,20 @@ impl Parser {
             });
         }
 
-        self.parse_postfix()
+        self.parse_power()
+    }
+
+    fn parse_power(&mut self) -> Result<Expression, YaguareteError> {
+        let left = self.parse_postfix()?;
+        if self.match_token(&TokenType::Potencia) {
+            let right = self.parse_unary()?;
+            return Ok(Expression::Binary {
+                left: Box::new(left),
+                op: BinaryOp::Potencia,
+                right: Box::new(right),
+            });
+        }
+        Ok(left)
     }
 
     fn parse_postfix(&mut self) -> Result<Expression, YaguareteError> {

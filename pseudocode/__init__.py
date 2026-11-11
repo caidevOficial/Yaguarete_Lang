@@ -19,7 +19,7 @@
 Paquete oficial del Lenguaje de Programación YAGUARETÉ.
 """
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 __author__ = "Facu Falcone <a.facundo.falcone@gmail.com>"
 
 import sys

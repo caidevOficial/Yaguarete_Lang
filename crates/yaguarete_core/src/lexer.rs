@@ -175,7 +175,7 @@ impl<'a> Lexer<'a> {
         if words.len() >= 2 {
             let first_is_word = words[0].chars().next().is_some_and(|c| c.is_alphabetic() || c == '_');
             let second_is_word = words[1].chars().next().is_some_and(|c| c.is_alphabetic() || c == '_');
-            let ops = ["+", "-", "*", "/", "%", "==", "!=", "<", ">", "<=", ">=", "&&", "||", "Y", "O", ",", ";", ")", "]", ":"];
+            let ops = ["+", "-", "*", "/", "%", "^", "==", "!=", "<", ">", "<=", ">=", "&&", "||", "Y", "O", ",", ";", ")", "]", ":"];
             if first_is_word && second_is_word && !ops.contains(&words[1]) {
                 return true;
             }
@@ -271,6 +271,10 @@ impl<'a> Lexer<'a> {
                 '%' => {
                     self.advance();
                     self.tokens.push(Token::new(TokenType::Mod, start_line, start_col, 1));
+                }
+                '^' => {
+                    self.advance();
+                    self.tokens.push(Token::new(TokenType::Potencia, start_line, start_col, 1));
                 }
                 '=' => {
                     self.advance();

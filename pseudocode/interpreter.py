@@ -20,6 +20,7 @@ Intérprete AST (Tree-Walk Interpreter) para el lenguaje de pseudocódigo.
 Ejecuta de manera segura y tipada el AST analizado, gestionando entornos de ejecución y llamadas.
 """
 
+import math
 from typing import Any, Dict, List, Optional
 from pseudocode.types_system import (
     DataType, VectorType, MatrixType, StructType, StructInstance,
@@ -37,6 +38,10 @@ from pseudocode.ast_nodes import (
 )
 from pseudocode.builtins import (
     ArchivoHandle, builtin_abrir_archivo, builtin_es_par, builtin_es_impar, builtin_mod,
+    builtin_raiz_cuadrada, builtin_abs, builtin_potencia, builtin_aleatorio,
+    builtin_leer, builtin_mayusculas, builtin_minusculas, builtin_recortar,
+    builtin_dividir_cadena, builtin_a_entero, builtin_a_real, builtin_a_flotante,
+    builtin_a_cadena, builtin_a_booleano, builtin_min, builtin_max, builtin_redondear,
     stringify_value
 )
 from pseudocode.errors import RuntimeError as PseudoRuntimeError
@@ -80,8 +85,9 @@ class Environment:
 
 
 class Interpreter:
-    def __init__(self, source: str = "", filename: str = "<código>", output_collector: Optional[List[str]] = None):
+    def __init__(self, source: str = "", filename: str = "<código>", output_collector: Optional[List[str]] = None, input_fn=None):
         self.source = source
+        self.input_fn = input_fn if input_fn is not None else input
         self.filename = filename
         self.global_env = Environment(name="global")
         self.current_env = self.global_env
@@ -98,6 +104,8 @@ class Interpreter:
         self.global_env.define("NONE", None, TYPE_NULO)
         self.global_env.define("nulo", None, TYPE_NULO)
         self.global_env.define("null", None, TYPE_NULO)
+        self.global_env.define("PI", math.pi, TYPE_REAL)
+        self.global_env.define("pi", math.pi, TYPE_REAL)
 
     def run(self, program: Program):
         # 0. Registrar estructuras
@@ -118,6 +126,11 @@ class Interpreter:
 
     def execute_statement(self, stmt: Statement):
         if isinstance(stmt, VarDeclaration):
+            if stmt.name.upper() == "PI":
+                raise PseudoRuntimeError(
+                    "No se puede reasignar la constante matemática 'PI'",
+                    line=stmt.line, column=stmt.column, source=self.source
+                )
             val = None
             # Si tiene expresión de inicialización
             if stmt.initializer:
@@ -222,6 +235,11 @@ class Interpreter:
 
     def _assign_target(self, target: Expression, op: str, value: Any):
         if isinstance(target, Variable):
+            if target.name.upper() == "PI":
+                raise PseudoRuntimeError(
+                    "No se puede reasignar la constante matemática 'PI'",
+                    line=target.line, column=target.column, source=self.source
+                )
             if op == "=":
                 self.current_env.set(target.name, value, target.line, target.column, self.source)
             elif op == "+=":
@@ -410,6 +428,24 @@ class Interpreter:
                 if right == 0 or int(right) == 0:
                     raise PseudoRuntimeError("Módulo por cero.", line=expr.line, column=expr.column, source=self.source)
                 return int(left) % int(right)
+            if op == "^":
+                if left == 0 and right < 0:
+                    raise PseudoRuntimeError(
+                        "División por cero: no se puede elevar 0 a un exponente negativo.",
+                        line=expr.line, column=expr.column, source=self.source
+                    )
+                if left < 0 and isinstance(right, float) and not right.is_integer():
+                    raise PseudoRuntimeError(
+                        "No se puede elevar un número negativo a un exponente fraccionario real.",
+                        line=expr.line, column=expr.column, source=self.source
+                    )
+                res = float(left) ** float(right)
+                if isinstance(res, complex):
+                    raise PseudoRuntimeError(
+                        "No se puede elevar un número negativo a un exponente fraccionario real.",
+                        line=expr.line, column=expr.column, source=self.source
+                    )
+                return float(res)
 
             # Comparaciones
             if op == "==":
@@ -507,14 +543,58 @@ class Interpreter:
                 evaluated_args = [self.evaluate_expression(a) for a in expr.args]
 
                 # Builtins
-                if fn_name == "ABRIR_ARCHIVO":
-                    return builtin_abrir_archivo(str(evaluated_args[0]), str(evaluated_args[1]))
-                if fn_name == "ESPAR":
-                    return builtin_es_par(evaluated_args[0])
-                if fn_name == "ESIMPAR":
-                    return builtin_es_impar(evaluated_args[0])
-                if fn_name == "MOD":
-                    return builtin_mod(evaluated_args[0], evaluated_args[1])
+                try:
+                    if fn_name == "ABRIR_ARCHIVO":
+                        return builtin_abrir_archivo(str(evaluated_args[0]), str(evaluated_args[1]))
+                    if fn_name == "ESPAR":
+                        return builtin_es_par(evaluated_args[0])
+                    if fn_name == "ESIMPAR":
+                        return builtin_es_impar(evaluated_args[0])
+                    if fn_name == "MOD":
+                        return builtin_mod(evaluated_args[0], evaluated_args[1])
+                    if fn_name == "RAIZCUADRADA":
+                        if len(evaluated_args) != 1:
+                            raise PseudoRuntimeError(f"La función 'RAIZCUADRADA' espera 1 argumento, se recibieron {len(evaluated_args)}")
+                        return builtin_raiz_cuadrada(evaluated_args[0])
+                    if fn_name == "ABS":
+                        if len(evaluated_args) != 1:
+                            raise PseudoRuntimeError(f"La función 'ABS' espera 1 argumento, se recibieron {len(evaluated_args)}")
+                        return builtin_abs(evaluated_args[0])
+                    if fn_name == "POTENCIA":
+                        if len(evaluated_args) != 2:
+                            raise PseudoRuntimeError(f"La función 'POTENCIA' espera 2 argumentos, se recibieron {len(evaluated_args)}")
+                        return builtin_potencia(evaluated_args[0], evaluated_args[1])
+                    if fn_name == "ALEATORIO":
+                        if len(evaluated_args) != 2:
+                            raise PseudoRuntimeError(f"La función 'ALEATORIO' espera 2 argumentos, se recibieron {len(evaluated_args)}")
+                        return builtin_aleatorio(evaluated_args[0], evaluated_args[1])
+                    if fn_name == "LEER":
+                        if len(evaluated_args) > 1:
+                            raise PseudoRuntimeError(f"La función 'LEER' espera 0 o 1 argumento, se recibieron {len(evaluated_args)}")
+                        return builtin_leer(evaluated_args[0] if evaluated_args else None, input_fn=self.input_fn)
+                    _ARITY1 = {
+                        "MAYUSCULAS": builtin_mayusculas, "MINUSCULAS": builtin_minusculas,
+                        "RECORTAR": builtin_recortar, "A_ENTERO": builtin_a_entero,
+                        "A_REAL": builtin_a_real, "A_FLOTANTE": builtin_a_flotante,
+                        "A_CADENA": builtin_a_cadena, "A_BOOLEANO": builtin_a_booleano,
+                    }
+                    _ARITY2 = {"DIVIDIR_CADENA": builtin_dividir_cadena, "MIN": builtin_min, "MAX": builtin_max}
+                    if fn_name in _ARITY1:
+                        if len(evaluated_args) != 1:
+                            raise PseudoRuntimeError(f"La función '{fn_name}' espera 1 argumento, se recibieron {len(evaluated_args)}")
+                        return _ARITY1[fn_name](evaluated_args[0])
+                    if fn_name in _ARITY2:
+                        if len(evaluated_args) != 2:
+                            raise PseudoRuntimeError(f"La función '{fn_name}' espera 2 argumentos, se recibieron {len(evaluated_args)}")
+                        return _ARITY2[fn_name](evaluated_args[0], evaluated_args[1])
+                    if fn_name == "REDONDEAR":
+                        if len(evaluated_args) not in (1, 2):
+                            raise PseudoRuntimeError(f"La función 'REDONDEAR' espera 1 o 2 argumentos, se recibieron {len(evaluated_args)}")
+                        return builtin_redondear(*evaluated_args)
+                except PseudoRuntimeError as e:
+                    if e.source is None:
+                        raise PseudoRuntimeError(e.message, line=expr.line, column=expr.column, source=self.source)
+                    raise
                 if fn_name == "IMPRIMIR":
                     text = " ".join(stringify_value(x) for x in evaluated_args)
                     if self.output_collector is not None:

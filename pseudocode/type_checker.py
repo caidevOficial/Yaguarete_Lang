@@ -90,7 +90,25 @@ class TypeChecker:
         self.global_scope.define("ESPAR", TYPE_BOOLEANO)
         self.global_scope.define("ESIMPAR", TYPE_BOOLEANO)
         self.global_scope.define("MOD", TYPE_ENTERO)
+        self.global_scope.define("RAIZCUADRADA", TYPE_REAL)
+        self.global_scope.define("ABS", TYPE_ANY)
+        self.global_scope.define("POTENCIA", TYPE_REAL)
+        self.global_scope.define("ALEATORIO", TYPE_ENTERO)
+        self.global_scope.define("LEER", TYPE_ANY)
+        for _n in ("MAYUSCULAS", "MINUSCULAS", "RECORTAR", "A_CADENA"):
+            self.global_scope.define(_n, TYPE_CADENA)
+        self.global_scope.define("DIVIDIR_CADENA", VectorType(TYPE_CADENA))
+        self.global_scope.define("A_ENTERO", TYPE_ENTERO)
+        self.global_scope.define("A_REAL", TYPE_REAL)
+        self.global_scope.define("A_FLOTANTE", TYPE_FLOTANTE)
+        self.global_scope.define("A_BOOLEANO", TYPE_BOOLEANO)
+        self.global_scope.define("MIN", TYPE_REAL)
+        self.global_scope.define("MAX", TYPE_REAL)
+        self.global_scope.define("REDONDEAR", TYPE_ENTERO)
         self.global_scope.define("IMPRIMIR", TYPE_VOID)
+        # Constantes matemáticas
+        self.global_scope.define("PI", TYPE_REAL)
+        self.global_scope.define("pi", TYPE_REAL)
         # Nulo (null / None)
         self.global_scope.define("NULO", TYPE_NULO)
         self.global_scope.define("NULL", TYPE_NULO)
@@ -153,6 +171,11 @@ class TypeChecker:
 
     def check_statement(self, stmt: Statement):
         if isinstance(stmt, VarDeclaration):
+            if stmt.name.upper() == "PI":
+                raise PseudoTypeError(
+                    "No se puede reasignar la constante matemática 'PI'",
+                    line=stmt.line, column=stmt.column, source=self.source
+                )
             # Resolver definición de estructura si el tipo es StructType
             curr_type = stmt.data_type
             if isinstance(curr_type, StructType):
@@ -296,6 +319,11 @@ class TypeChecker:
 
     def check_assignment_target(self, target: Expression) -> DataType:
         if isinstance(target, Variable):
+            if target.name.upper() == "PI":
+                raise PseudoTypeError(
+                    "No se puede reasignar la constante matemática 'PI'",
+                    line=target.line, column=target.column, source=self.source
+                )
             sym = self.current_scope.lookup(target.name)
             if not sym:
                 if self.lenient:
@@ -401,13 +429,15 @@ class TypeChecker:
                     return TYPE_FLOTANTE
                 return TYPE_ENTERO
 
-            if expr.op in ("-", "*", "/", "//", "%", "MOD"):
+            if expr.op in ("-", "*", "/", "//", "%", "MOD", "^"):
                 numeric_types = (TYPE_ENTERO, TYPE_FLOTANTE, TYPE_REAL, TYPE_ANY)
                 if left_t not in numeric_types or right_t not in numeric_types:
                     raise PseudoTypeError(
                         f"El operador '{expr.op}' requiere operandos numéricos, pero se obtuvo {left_t} y {right_t}",
                         line=expr.line, column=expr.column, source=self.source
                     )
+                if expr.op == "^":
+                    return TYPE_REAL
                 if expr.op == "//":
                     return TYPE_ENTERO
                 if expr.op in ("%", "MOD"):
@@ -485,12 +515,154 @@ class TypeChecker:
 
             if isinstance(expr.callee, Variable):
                 fn_name = expr.callee.name
-                if fn_name == "ABRIR_ARCHIVO":
+                fn_upper = fn_name.upper()
+                numeric_types = (TYPE_ENTERO, TYPE_FLOTANTE, TYPE_REAL, TYPE_ANY)
+
+                if fn_upper == "ABRIR_ARCHIVO":
                     return TYPE_ARCHIVO
-                if fn_name in ("ESPAR", "ESIMPAR"):
+                if fn_upper in ("ESPAR", "ESIMPAR"):
                     return TYPE_BOOLEANO
-                if fn_name == "MOD":
+                if fn_upper == "MOD":
                     return TYPE_ENTERO
+                if fn_upper == "RAIZCUADRADA":
+                    if len(expr.args) != 1:
+                        raise PseudoTypeError(
+                            f"La función 'RAIZCUADRADA' espera 1 argumento, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    arg_t = self.check_expression(expr.args[0])
+                    if arg_t not in numeric_types:
+                        raise PseudoTypeError(
+                            f"La función 'RAIZCUADRADA' requiere un argumento numérico, se obtuvo {arg_t}",
+                            line=expr.args[0].line, column=expr.args[0].column, source=self.source
+                        )
+                    return TYPE_REAL
+                if fn_upper == "ABS":
+                    if len(expr.args) != 1:
+                        raise PseudoTypeError(
+                            f"La función 'ABS' espera 1 argumento, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    arg_t = self.check_expression(expr.args[0])
+                    if arg_t not in numeric_types:
+                        raise PseudoTypeError(
+                            f"La función 'ABS' requiere un argumento numérico, se obtuvo {arg_t}",
+                            line=expr.args[0].line, column=expr.args[0].column, source=self.source
+                        )
+                    if arg_t == TYPE_ENTERO:
+                        return TYPE_ENTERO
+                    if arg_t == TYPE_FLOTANTE:
+                        return TYPE_FLOTANTE
+                    return TYPE_REAL
+                if fn_upper == "POTENCIA":
+                    if len(expr.args) != 2:
+                        raise PseudoTypeError(
+                            f"La función 'POTENCIA' espera 2 argumentos, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    for arg_expr in expr.args:
+                        arg_t = self.check_expression(arg_expr)
+                        if arg_t not in numeric_types:
+                            raise PseudoTypeError(
+                                f"La función 'POTENCIA' requiere argumentos numéricos, se obtuvo {arg_t}",
+                                line=arg_expr.line, column=arg_expr.column, source=self.source
+                            )
+                    return TYPE_REAL
+                if fn_upper == "ALEATORIO":
+                    if len(expr.args) != 2:
+                        raise PseudoTypeError(
+                            f"La función 'ALEATORIO' espera 2 argumentos, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    for arg_expr in expr.args:
+                        arg_t = self.check_expression(arg_expr)
+                        if arg_t not in numeric_types:
+                            raise PseudoTypeError(
+                                f"La función 'ALEATORIO' requiere argumentos numéricos, se obtuvo {arg_t}",
+                                line=arg_expr.line, column=arg_expr.column, source=self.source
+                            )
+                    return TYPE_ENTERO
+
+                if fn_upper == "LEER":
+                    if len(expr.args) > 1:
+                        raise PseudoTypeError(
+                            f"La función 'LEER' espera 0 o 1 argumento, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    for arg_expr in expr.args:
+                        self.check_expression(arg_expr)
+                    return TYPE_ANY
+                if fn_upper in ("MAYUSCULAS", "MINUSCULAS", "RECORTAR"):
+                    if len(expr.args) != 1:
+                        raise PseudoTypeError(
+                            f"La función '{fn_upper}' espera 1 argumento, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    arg_t = self.check_expression(expr.args[0])
+                    if arg_t not in (TYPE_CADENA, TYPE_CARACTER, TYPE_ANY):
+                        raise PseudoTypeError(
+                            f"La función '{fn_upper}' requiere un argumento CADENA o CARACTER, se obtuvo {arg_t}",
+                            line=expr.args[0].line, column=expr.args[0].column, source=self.source
+                        )
+                    return TYPE_CADENA
+                if fn_upper == "DIVIDIR_CADENA":
+                    if len(expr.args) != 2:
+                        raise PseudoTypeError(
+                            f"La función 'DIVIDIR_CADENA' espera 2 argumentos, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    for arg_expr in expr.args:
+                        arg_t = self.check_expression(arg_expr)
+                        if arg_t not in (TYPE_CADENA, TYPE_CARACTER, TYPE_ANY):
+                            raise PseudoTypeError(
+                                f"La función 'DIVIDIR_CADENA' requiere argumentos CADENA o CARACTER, se obtuvo {arg_t}",
+                                line=arg_expr.line, column=arg_expr.column, source=self.source
+                            )
+                    return VectorType(TYPE_CADENA)
+                if fn_upper in ("A_ENTERO", "A_REAL", "A_FLOTANTE", "A_CADENA", "A_BOOLEANO"):
+                    if len(expr.args) != 1:
+                        raise PseudoTypeError(
+                            f"La función '{fn_upper}' espera 1 argumento, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    self.check_expression(expr.args[0])
+                    return {"A_ENTERO": TYPE_ENTERO, "A_REAL": TYPE_REAL, "A_FLOTANTE": TYPE_FLOTANTE,
+                            "A_CADENA": TYPE_CADENA, "A_BOOLEANO": TYPE_BOOLEANO}[fn_upper]
+                if fn_upper in ("MIN", "MAX"):
+                    if len(expr.args) != 2:
+                        raise PseudoTypeError(
+                            f"La función '{fn_upper}' espera 2 argumentos, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    arg_types = []
+                    for arg_expr in expr.args:
+                        arg_t = self.check_expression(arg_expr)
+                        if arg_t not in numeric_types:
+                            raise PseudoTypeError(
+                                f"La función '{fn_upper}' requiere argumentos numéricos, se obtuvo {arg_t}",
+                                line=arg_expr.line, column=arg_expr.column, source=self.source
+                            )
+                        arg_types.append(arg_t)
+                    if TYPE_ANY in arg_types:
+                        return TYPE_ANY
+                    if all(t == TYPE_ENTERO for t in arg_types):
+                        return TYPE_ENTERO
+                    return TYPE_REAL
+                if fn_upper == "REDONDEAR":
+                    if len(expr.args) not in (1, 2):
+                        raise PseudoTypeError(
+                            f"La función 'REDONDEAR' espera 1 o 2 argumentos, se pasaron {len(expr.args)}",
+                            line=expr.line, column=expr.column, source=self.source
+                        )
+                    for idx, arg_expr in enumerate(expr.args):
+                        arg_t = self.check_expression(arg_expr)
+                        ok = (TYPE_ENTERO, TYPE_ANY) if idx == 1 else numeric_types
+                        if arg_t not in ok:
+                            raise PseudoTypeError(
+                                f"La función 'REDONDEAR' requiere argumentos numéricos, se obtuvo {arg_t}",
+                                line=arg_expr.line, column=arg_expr.column, source=self.source
+                            )
+                    return TYPE_ENTERO if len(expr.args) == 1 else TYPE_REAL
 
                 if fn_name in self.functions:
                     fn_def = self.functions[fn_name]

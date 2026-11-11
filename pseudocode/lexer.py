@@ -152,7 +152,7 @@ class Lexer:
         # sin operador entre ellos son imposibles (ej: 'RETORNA 3', 'Asignar un valor', 'comentario explicativo')
         if len(tokens_after) >= 2:
             t1, t2 = tokens_after[0], tokens_after[1]
-            op_symbols = {'+', '-', '*', '/', '%', '==', '!=', '<', '>', '<=', '>=', '&&', '||', 'Y', 'O', ',', ';', ')', ']', ':'}
+            op_symbols = {'+', '-', '*', '/', '%', '^', '==', '!=', '<', '>', '<=', '>=', '&&', '||', 'Y', 'O', ',', ';', ')', ']', ':'}
             t1_is_word = bool(re.match(r'^[a-zA-Z_]', t1))
             t2_is_word_or_num = bool(re.match(r'^[a-zA-Z0-9_]', t2))
             if t1_is_word and t2_is_word_or_num and t2 not in op_symbols:
@@ -369,6 +369,9 @@ class Lexer:
             elif ch == '%':
                 self.advance()
                 tokens.append(Token(TokenType.MOD, "%", start_line, start_col, 1))
+            elif ch == '^':
+                self.advance()
+                tokens.append(Token(TokenType.POTENCIA, "^", start_line, start_col, 1))
             elif ch == '=':
                 self.advance()
                 if self.match('='):

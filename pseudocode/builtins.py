@@ -21,8 +21,10 @@ Incluye ArchivoHandle con soporte para .findearchivo, .LEER_LINEA(), .ESCRIBIR_L
 además de ESPAR(), ESIMPAR(), MOD() y ABRIR_ARCHIVO().
 """
 
+import math
 import os
-from typing import List, Any, Optional
+import random
+from typing import List, Any, Optional, Union
 from pseudocode.errors import RuntimeError
 
 
@@ -182,3 +184,182 @@ def builtin_mod(a: Any, b: Any) -> int:
     if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
         raise RuntimeError(f"MOD requiere dos operandos numéricos")
     return int(a) % int(b)
+
+
+def builtin_raiz_cuadrada(number: Any) -> float:
+    if not isinstance(number, (int, float)) or isinstance(number, bool):
+        raise RuntimeError(f"RAIZCUADRADA requiere un número, se obtuvo {type(number).__name__}")
+    if number < 0:
+        raise RuntimeError("No se puede calcular la raíz cuadrada de un número negativo.")
+    return math.sqrt(float(number))
+
+
+def builtin_abs(number: Any) -> Union[int, float]:
+    if not isinstance(number, (int, float)) or isinstance(number, bool):
+        raise RuntimeError(f"ABS requiere un número, se obtuvo {type(number).__name__}")
+    if isinstance(number, int):
+        return abs(int(number))
+    return abs(float(number))
+
+
+def builtin_potencia(base: Any, exp: Any) -> float:
+    if (not isinstance(base, (int, float)) or isinstance(base, bool) or
+            not isinstance(exp, (int, float)) or isinstance(exp, bool)):
+        raise RuntimeError("POTENCIA requiere dos operandos numéricos.")
+    if base == 0 and exp < 0:
+        raise RuntimeError("División por cero: no se puede elevar 0 a un exponente negativo.")
+    if base < 0 and isinstance(exp, float) and not exp.is_integer():
+        raise RuntimeError("No se puede elevar un número negativo a un exponente fraccionario real.")
+    return float(math.pow(float(base), float(exp)))
+
+
+def builtin_aleatorio(min_val: Any, max_val: Any) -> int:
+    if (not isinstance(min_val, (int, float)) or isinstance(min_val, bool) or
+            not isinstance(max_val, (int, float)) or isinstance(max_val, bool)):
+        raise RuntimeError("ALEATORIO requiere dos operandos numéricos.")
+    min_i = int(min_val)
+    max_i = int(max_val)
+    if min_i > max_i:
+        raise RuntimeError("En ALEATORIO(min, max), 'min' no puede ser mayor que 'max'.")
+    return random.randint(min_i, max_i)
+
+
+# ---------------------------------------------------------------------------
+# Builtins de texto, entrada, conversión y numéricos adicionales
+# ---------------------------------------------------------------------------
+def builtin_leer(prompt: Any = None, input_fn=input) -> Any:
+    """LEER() / LEER(mensaje): lee una línea y la autoparsea."""
+    import sys
+    if prompt is not None:
+        sys.stdout.write(stringify_value(prompt))
+        sys.stdout.flush()
+    try:
+        line = input_fn()
+    except EOFError:
+        return ""
+    if line is None or line == "":
+        return ""
+    return parse_auto_value(line)
+
+
+def _require_text(name: str, value: Any) -> str:
+    if not isinstance(value, str):
+        raise RuntimeError(f"{name} requiere una cadena, se obtuvo {type(value).__name__}")
+    return value
+
+
+def builtin_mayusculas(text: Any) -> str:
+    return _require_text("MAYUSCULAS", text).upper()
+
+
+def builtin_minusculas(text: Any) -> str:
+    return _require_text("MINUSCULAS", text).lower()
+
+
+def builtin_recortar(text: Any) -> str:
+    return _require_text("RECORTAR", text).strip()
+
+
+def builtin_dividir_cadena(text: Any, sep: Any) -> List[str]:
+    _require_text("DIVIDIR_CADENA", text)
+    _require_text("DIVIDIR_CADENA", sep)
+    if sep == "":
+        raise RuntimeError("El separador no puede estar vacío.")
+    return text.split(sep)
+
+
+def _is_number(v: Any) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def builtin_a_entero(value: Any) -> int:
+    err = RuntimeError(f"No se puede convertir '{stringify_value(value)}' a ENTERO")
+    if isinstance(value, bool):
+        return 1 if value else 0
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            raise err
+        return int(value)
+    if isinstance(value, str):
+        s = value.strip()
+        try:
+            return int(s)
+        except ValueError:
+            pass
+        try:
+            f = float(s)
+            if math.isnan(f) or math.isinf(f):
+                raise err
+            return int(f)
+        except ValueError:
+            raise err
+    raise err
+
+
+def builtin_a_real(value: Any) -> float:
+    if isinstance(value, bool):
+        return 1.0 if value else 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except ValueError:
+            pass
+    raise RuntimeError(f"No se puede convertir '{stringify_value(value)}' a REAL")
+
+
+def builtin_a_flotante(value: Any) -> float:
+    try:
+        return builtin_a_real(value)
+    except RuntimeError:
+        raise RuntimeError(f"No se puede convertir '{stringify_value(value)}' a FLOTANTE")
+
+
+def builtin_a_cadena(value: Any) -> str:
+    return stringify_value(value)
+
+
+def builtin_a_booleano(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        u = value.strip().upper()
+        if u in ("VERDADERO", "TRUE"):
+            return True
+        if u in ("FALSO", "FALSE"):
+            return False
+    raise RuntimeError(f"No se puede convertir '{stringify_value(value)}' a BOOLEANO")
+
+
+def builtin_min(a: Any, b: Any) -> Union[int, float]:
+    if not _is_number(a) or not _is_number(b):
+        raise RuntimeError("MIN requiere dos operandos numéricos.")
+    r = min(a, b)
+    return r if isinstance(a, int) and isinstance(b, int) else float(r)
+
+
+def builtin_max(a: Any, b: Any) -> Union[int, float]:
+    if not _is_number(a) or not _is_number(b):
+        raise RuntimeError("MAX requiere dos operandos numéricos.")
+    r = max(a, b)
+    return r if isinstance(a, int) and isinstance(b, int) else float(r)
+
+
+def builtin_redondear(num: Any, decimales: Any = None) -> Union[int, float]:
+    from decimal import Decimal, ROUND_HALF_UP
+    if not _is_number(num):
+        raise RuntimeError("REDONDEAR requiere un número.")
+    if isinstance(num, float) and (math.isnan(num) or math.isinf(num)):
+        raise RuntimeError("REDONDEAR no puede operar sobre NaN o infinito.")
+    d = Decimal(str(num))
+    if decimales is None:
+        return int(d.quantize(Decimal(1), rounding=ROUND_HALF_UP))
+    if not isinstance(decimales, int) or isinstance(decimales, bool) or decimales < 0:
+        raise RuntimeError("REDONDEAR requiere que 'decimales' sea un entero mayor o igual a 0.")
+    q = Decimal(1).scaleb(-decimales)
+    return float(d.quantize(q, rounding=ROUND_HALF_UP))

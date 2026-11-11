@@ -5,6 +5,46 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ---
 
+## [Unreleased]
+
+---
+
+## [0.2.0] - 2026-11-11
+
+### 🚀 Rendimiento Extremo y Motor de Máquina Virtual (Bytecode VM)
+- **Nuevo Motor de Máquina Virtual (`crates/yaguarete_core/src/vm/`):**
+  - Implementación de un compilador de bytecode (`Compiler`) y una máquina virtual basada en pila (`VM`) con conjunto de instrucciones compacto (`OpCode`) y pool de constantes (`Chunk`).
+  - Resolución de variables locales estática a slots indexados en tiempo de compilación O(1), eliminando búsquedas por cadena en tablas hash durante bucles intensivos.
+  - Soporte de saltos directos (`Jump`, `JumpIfFalse`, `Loop`), llamadas y retornos de funciones con marcos de ejecución aislados (`CallFrame`), recursión y estructuras autorreferenciales.
+  - Modificación e indexación in-situ sin clonado (`SetIndexLocal`, `SetIndexGlobal`, `GetIndexLocal`, `GetIndexGlobal`, `LengthLocal`, `LengthGlobal`), eliminando completamente la asignación masiva de memoria en operaciones sobre vectores.
+  - Selección de motor en el CLI mediante el flag `--engine <vm|ast>` (habilitado `vm` por defecto).
+- **Optimizaciones de Nivel 1 y 2 en el Intérprete AST (`eval.rs`):**
+  - Adopción de `rustc-hash` (`FxHashMap`) para tablas de símbolos y asignación unificada de variables y tipos en un único `VariableEntry`.
+  - Reutilización de ámbitos en memoria mediante pool interno (`scope_pool`) para evitar reasignaciones en el heap durante iteraciones de bucles `PARA`, `MIENTRAS` y `HACER MIENTRAS`.
+  - Atajos (*fast-paths*) para mutación directa en memoria en operadores de asignación (`+=`, `-=`) e incremento/decremento (`i++`, `i--`).
+  - Evaluación de condiciones relacionales en registros de CPU sin creación de instancias intermedias de `Value::Booleano`.
+- **Resultados de Benchmark (Selection Sort de 10.000 elementos, ~50 millones de iteraciones):**
+  - Baseline original: `39.459,87 ms` (~39,5 segundos).
+  - Intérprete AST optimizado: `9.068,74 ms` (~9,0 segundos) — **4,35x más rápido**.
+  - Máquina Virtual Bytecode (`--engine vm`): `6.901,29 ms` (~6,9 segundos) — **5,72x más rápido** (**82,5% de reducción del tiempo de ejecución total**).
+
+### ⚡ Motor de Ejecución y Lenguaje (`yaguarete_core`)
+- **Operador de potencia `^`** y funciones matemáticas incorporadas: `POTENCIA(base, exponente)`, `RAIZCUADRADA(numero)`, `ABS(numero)` y `ALEATORIO(min, max)`; constante `PI`.
+- **Entrada:** `LEER()` / `LEER(mensaje)` con autoparseo (`BOOLEANO`, `ENTERO`, `REAL` o `CADENA`); el mensaje se imprime sin salto de línea. No disponible en el depurador DAP.
+- **Cadenas:** `MAYUSCULAS(texto)`, `MINUSCULAS(texto)`, `RECORTAR(texto)` y `DIVIDIR_CADENA(texto, separador): CADENA[]` (separador no vacío).
+- **Conversión:** `A_ENTERO`, `A_REAL`, `A_FLOTANTE`, `A_CADENA`, `A_BOOLEANO`.
+- **Matemáticas:** `MIN(a, b)`, `MAX(a, b)` y `REDONDEAR(numero)` / `REDONDEAR(numero, decimales)` (half-away-from-zero: `2.5` → `3`, `-2.5` → `-3`).
+
+### 🎨 Extensión de VS Code
+- Autocompletado, hover y exclusión de "ir a definición" para todas las funciones nuevas; `LEER` ahora se completa como `LEER(mensaje)`.
+- Ayuda de firma (*signature help*) para todas las built-ins (nuevas y existentes: `RAIZCUADRADA`, `ABS`, `POTENCIA`, `ALEATORIO`, `MOD`, `ESPAR`, `ESIMPAR`, `ABRIR_ARCHIVO`).
+- Gramática TextMate: nuevos grupos `support.function.builtin.string` y `support.function.builtin.conversion`; `MIN`, `MAX`, `REDONDEAR` en `math`; los nombres built-in ya no se confunden con tipos de estructura.
+
+### 📚 Documentación
+- `README.md` (sección Built-ins) y `estructuras.txt` actualizados con las nuevas funciones.
+
+---
+
 ## [0.1.2] - 2026-11-05
 
 ### ⚡ Motor de Ejecución y Lenguaje (`yaguarete_core`)

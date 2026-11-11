@@ -1,14 +1,14 @@
-//! Servidor DAP (Debug Adapter Protocol) de YAGUARETÉ: `yaguarete dap`.
+﻿//! Servidor DAP (Debug Adapter Protocol) de YAGUARETÃ‰: `yaguarete dap`.
 //!
 //! Habla JSON con encabezado `Content-Length` por stdin/stdout, de modo que VS Code
 //! (y cualquier IDE compatible con DAP) pueda poner breakpoints, avanzar paso a paso e
 //! inspeccionar variables de un programa `.yaguarete`.
 //!
-//! Arquitectura (el intérprete usa `Rc`, por lo que no cruza hilos):
-//! - Hilo principal: lee requests y responde. Nunca toca valores del intérprete.
-//! - Hilo del intérprete: ejecuta el programa; el hook [`DapDebugger`] se bloquea en cada
+//! Arquitectura (el intÃ©rprete usa `Rc`, por lo que no cruza hilos):
+//! - Hilo principal: lee requests y responde. Nunca toca valores del intÃ©rprete.
+//! - Hilo del intÃ©rprete: ejecuta el programa; el hook [`DapDebugger`] se bloquea en cada
 //!   parada, publica un [`Snapshot`] ya convertido a texto y emite el evento `stopped`.
-//! - La salida estándar (stdout) es EXCLUSIVAMENTE el canal del protocolo: IMPRIMIR se
+//! - La salida estÃ¡ndar (stdout) es EXCLUSIVAMENTE el canal del protocolo: IMPRIMIR se
 //!   redirige a eventos `output` mediante `Interpreter::set_print_sink`.
 
 use serde_json::{json, Value as Json};
@@ -106,7 +106,7 @@ struct FrameSnap {
 #[derive(Debug, Clone, Default)]
 struct Snapshot {
     frames: Vec<FrameSnap>,
-    /// `variablesReference = índice + 1`.
+    /// `variablesReference = Ã­ndice + 1`.
     refs: Vec<Vec<VarSnap>>,
 }
 
@@ -130,7 +130,7 @@ fn infer_type(val: &UValue) -> String {
 
 fn truncate(mut s: String) -> String {
     if s.chars().count() > MAX_VALUE_LEN {
-        s = s.chars().take(MAX_VALUE_LEN).collect::<String>() + "…";
+        s = s.chars().take(MAX_VALUE_LEN).collect::<String>() + "â€¦";
     }
     s
 }
@@ -143,7 +143,7 @@ fn display_value(val: &UValue) -> String {
     })
 }
 
-/// Construye la variable y, si es un contenedor, sus hijos (acotado en profundidad/tamaño).
+/// Construye la variable y, si es un contenedor, sus hijos (acotado en profundidad/tamaÃ±o).
 fn make_var(
     name: &str,
     val: &UValue,
@@ -241,12 +241,12 @@ fn resolve_expression(snap: &Snapshot, frame_idx: usize, expr: &str) -> Result<V
     let frame = snap
         .frames
         .get(frame_idx)
-        .ok_or_else(|| "Marco de pila inválido.".to_string())?;
+        .ok_or_else(|| "Marco de pila invÃ¡lido.".to_string())?;
     let expr = expr.trim();
     let first_end = expr.find(['.', '[']).unwrap_or(expr.len());
     let root = &expr[..first_end];
     if root.is_empty() {
-        return Err("Expresión vacía.".into());
+        return Err("ExpresiÃ³n vacÃ­a.".into());
     }
     let scope = &snap.refs[(frame.scope_ref - 1) as usize];
     let mut current = scope
@@ -264,15 +264,15 @@ fn resolve_expression(snap: &Snapshot, frame_idx: usize, expr: &str) -> Result<V
             child_name = r[..end].to_string();
             rest = &r[end..];
         } else if let Some(r) = rest.strip_prefix('[') {
-            let end = r.find(']').ok_or("Falta ']' en la expresión.")?;
+            let end = r.find(']').ok_or("Falta ']' en la expresiÃ³n.")?;
             let idx = r[..end].trim();
             if idx.parse::<usize>().is_err() {
-                return Err("Solo se admiten índices numéricos literales.".into());
+                return Err("Solo se admiten Ã­ndices numÃ©ricos literales.".into());
             }
             child_name = format!("[{idx}]");
             rest = &r[end + 1..];
         } else {
-            return Err("Solo se admiten nombres de variables, campos (.) e índices ([n]).".into());
+            return Err("Solo se admiten nombres de variables, campos (.) e Ã­ndices ([n]).".into());
         }
         if current.reference == 0 {
             return Err(format!("'{}' no tiene miembros.", current.name));
@@ -310,7 +310,7 @@ enum StepMode {
 
 struct Session {
     chan: Arc<Channel>,
-    /// Líneas con breakpoint por archivo (clave normalizada).
+    /// LÃ­neas con breakpoint por archivo (clave normalizada).
     breakpoints: Mutex<HashMap<String, HashSet<usize>>>,
     snapshot: Mutex<Option<Snapshot>>,
     /// Ruta del programa lanzado (para el `source` de los marcos de pila).
@@ -330,7 +330,7 @@ struct DapDebugger {
     mode: StepMode,
     step_depth: usize,
     stop_on_entry: bool,
-    /// (línea, profundidad) de la sentencia anterior: evita detenerse dos veces en la misma línea.
+    /// (lÃ­nea, profundidad) de la sentencia anterior: evita detenerse dos veces en la misma lÃ­nea.
     last: Option<(usize, usize)>,
 }
 
@@ -405,7 +405,7 @@ impl Debugger for DapDebugger {
 }
 
 // ---------------------------------------------------------------------------
-// Ejecución del programa (hilo del intérprete)
+// EjecuciÃ³n del programa (hilo del intÃ©rprete)
 // ---------------------------------------------------------------------------
 
 struct Launch {
@@ -450,6 +450,7 @@ fn run_program(session: Arc<Session>, launch: Launch, rx: Receiver<Resume>) {
     };
 
     let mut interp = Interpreter::new();
+    interp.disable_input();
     let sink_chan = chan.clone();
     interp.set_print_sink(Box::new(move |text: &str| {
         sink_chan.output("stdout", &format!("{text}\n"));
@@ -554,7 +555,7 @@ pub fn run_dap() -> i32 {
                     });
                     chan.respond(&req, json!({}));
                 }
-                None => chan.respond_err(&req, "Falta el campo 'program' en la configuración de launch."),
+                None => chan.respond_err(&req, "Falta el campo 'program' en la configuraciÃ³n de launch."),
             },
             "setBreakpoints" => {
                 let path = args["source"]["path"].as_str().map(norm_path);
@@ -591,14 +592,14 @@ pub fn run_dap() -> i32 {
                         .stack_size(64 * 1024 * 1024)
                         .spawn(move || run_program(sess, l, rx));
                     if let Err(e) = spawned {
-                        chan.output("stderr", &format!("No se pudo iniciar el intérprete: {e}\n"));
+                        chan.output("stderr", &format!("No se pudo iniciar el intÃ©rprete: {e}\n"));
                         chan.event("terminated", json!({}));
                     }
                 }
             }
             "threads" => chan.respond(
                 &req,
-                json!({ "threads": [{ "id": THREAD_ID, "name": "YAGUARETÉ" }] }),
+                json!({ "threads": [{ "id": THREAD_ID, "name": "YAGUARETÃ‰" }] }),
             ),
             "stackTrace" => {
                 let snap = session.snapshot.lock().ok().and_then(|s| s.clone());
@@ -681,7 +682,7 @@ pub fn run_dap() -> i32 {
                         ),
                         Err(msg) => chan.respond_err(&req, &msg),
                     },
-                    None => chan.respond_err(&req, "El programa no está detenido."),
+                    None => chan.respond_err(&req, "El programa no estÃ¡ detenido."),
                 }
             }
             "continue" | "next" | "stepIn" | "stepOut" => {
@@ -691,7 +692,7 @@ pub fn run_dap() -> i32 {
                     "stepIn" => Resume::StepIn,
                     _ => Resume::StepOut,
                 };
-                // Primero la respuesta: así el evento `stopped` siguiente llega después.
+                // Primero la respuesta: asÃ­ el evento `stopped` siguiente llega despuÃ©s.
                 if command == "continue" {
                     chan.respond(&req, json!({ "allThreadsContinued": true }));
                 } else {

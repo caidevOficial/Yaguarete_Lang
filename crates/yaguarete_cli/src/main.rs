@@ -2,7 +2,7 @@ use clap::{Parser as ClapParser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 use std::process::exit;
 use std::time::Instant;
-use yaguarete_core::{check_file, run_file, VERSION};
+use yaguarete_core::{check_file, run_file, run_file_vm, VERSION};
 
 mod dap;
 mod repl;
@@ -12,7 +12,7 @@ mod updater;
 #[command(
     name = "yaguarete",
     author = "Facu Falcone <a.facundo.falcone@gmail.com>",
-    about = "YAGUARETÉ: Lenguaje de programación de pseudocódigo en español fuertemente tipado (v0.1.2 Native Rust Engine)",
+    about = "YAGUARETÉ: Lenguaje de programación de pseudocódigo en español fuertemente tipado (v0.2.0 Native Rust Engine)",
     long_about = None,
     disable_version_flag = true
 )]
@@ -38,6 +38,10 @@ struct Cli {
     /// Modo permisivo para pseudocódigo informal
     #[arg(short, long)]
     lenient: bool,
+
+    /// Motor de ejecución ('vm' de alta velocidad o 'ast' tradicional)
+    #[arg(long, value_enum, default_value = "vm")]
+    engine: EngineMode,
 }
 
 #[derive(Subcommand)]
@@ -61,6 +65,10 @@ enum Commands {
         /// Modo permisivo para pseudocódigo informal
         #[arg(short, long)]
         lenient: bool,
+
+        /// Motor de ejecución ('vm' de alta velocidad o 'ast' tradicional)
+        #[arg(long, value_enum, default_value = "vm")]
+        engine: EngineMode,
     },
 
     /// Verifica sintaxis y tipos sin ejecutar
@@ -112,6 +120,14 @@ enum Commands {
 
     /// Servidor de depuración DAP (breakpoints, paso a paso, variables) para VS Code
     Dap,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+pub enum EngineMode {
+    /// Máquina virtual de bytecode optimizada de alta velocidad
+    Vm,
+    /// Intérprete AST clásico (compatibilidad completa)
+    Ast,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
@@ -214,8 +230,9 @@ fn main() {
             time,
             time_full,
             lenient,
+            engine,
         }) => {
-            execute_run(file, time, time_full, lenient);
+            execute_run(file, time, time_full, lenient, engine);
         }
         Some(Commands::Check { file, lenient }) => {
             println!("[CHECK] Verificando archivo: {} (lenient={}) ...", file.display(), lenient);
@@ -272,7 +289,7 @@ fn main() {
         }
         None => {
             if let Some(file) = cli.file {
-                execute_run(file, cli.time, cli.time_full, cli.lenient);
+                execute_run(file, cli.time, cli.time_full, cli.lenient, cli.engine);
             } else {
                 repl::run_repl();
             }
@@ -284,11 +301,14 @@ fn main() {
     }
 }
 
-fn execute_run(file: PathBuf, time: Option<TimeMode>, time_full: bool, lenient: bool) {
+fn execute_run(file: PathBuf, time: Option<TimeMode>, time_full: bool, lenient: bool, engine: EngineMode) {
     println!("[RUN] Ejecutando archivo: {} (lenient={}) ...", file.display(), lenient);
 
     let start = Instant::now();
-    let res = run_file(&file, lenient);
+    let res = match engine {
+        EngineMode::Vm => run_file_vm(&file, lenient),
+        EngineMode::Ast => run_file(&file, lenient),
+    };
     let elapsed = start.elapsed().as_secs_f64();
 
     match res {

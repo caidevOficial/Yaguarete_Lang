@@ -1,7 +1,30 @@
-use crate::ast::*;
+﻿use crate::ast::*;
 use crate::error::YaguareteError;
 use crate::value::Value;
+use rustc_hash::FxHashMap;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
+
+static RNG_STATE: AtomicU64 = AtomicU64::new(0);
+
+fn next_random_u64() -> u64 {
+    let current = RNG_STATE.load(Ordering::Relaxed);
+    if current == 0 {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(0x9E37_79B9_7F4A_7C15);
+        let pid = std::process::id() as u64;
+        let seed = (nanos ^ (pid.wrapping_mul(0x517C_C1B7_2722_0A95))).max(1);
+        let _ = RNG_STATE.compare_exchange(0, seed, Ordering::Relaxed, Ordering::Relaxed);
+    }
+    let prev = RNG_STATE.fetch_add(0x9E37_79B9_7F4A_7C15, Ordering::Relaxed);
+    let mut z = prev.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
 
 #[derive(Debug, Clone)]
 pub struct FunctionData {
@@ -11,17 +34,31 @@ pub struct FunctionData {
 }
 
 #[derive(Debug, Clone)]
+pub struct VariableEntry {
+    pub val: Value,
+    pub var_type: DataType,
+}
+
+#[derive(Debug, Clone)]
 pub struct Scope {
-    variables: HashMap<String, Value>,
-    types: HashMap<String, DataType>,
+    entries: FxHashMap<String, VariableEntry>,
 }
 
 impl Scope {
     pub fn new() -> Self {
         Self {
-            variables: HashMap::new(),
-            types: HashMap::new(),
+            entries: FxHashMap::default(),
         }
+    }
+
+    pub fn with_capacity(cap: usize) -> Self {
+        Self {
+            entries: FxHashMap::with_capacity_and_hasher(cap, Default::default()),
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.entries.clear();
     }
 }
 
@@ -162,16 +199,45 @@ struct CallFrame {
     scope_base: usize,
 }
 
+pub fn parse_input_line(text: &str) -> Value {
+    let t = text.trim();
+    let up = t.to_uppercase();
+    if up == "VERDADERO" || up == "TRUE" {
+        return Value::Booleano(true);
+    }
+    if up == "FALSO" || up == "FALSE" {
+        return Value::Booleano(false);
+    }
+    if t.parse::<i64>().is_ok() {
+        return Value::Entero(t.parse::<i64>().unwrap());
+    }
+    if t.contains('.') || t.contains('e') || t.contains('E') {
+        let lower = t.to_lowercase();
+        let looks_numeric = t.chars().any(|c| c.is_ascii_digit())
+            && !lower.contains("inf")
+            && !lower.contains("nan");
+        if looks_numeric {
+            if let Ok(r) = t.parse::<f64>() {
+                return Value::Real(r);
+            }
+        }
+    }
+    Value::Cadena(text.to_string())
+}
+
 pub struct Interpreter {
     scopes: Vec<Scope>,
-    functions: HashMap<String, FunctionData>,
-    struct_defs: HashMap<String, StructDefData>,
+    scope_pool: Vec<Scope>,
+    functions: FxHashMap<String, std::rc::Rc<FunctionData>>,
+    struct_defs: FxHashMap<String, StructDefData>,
     pub output: Vec<String>,
     call_stack: Vec<CallFrame>,
     current_line: usize,
     current_column: usize,
     debugger: Option<Box<dyn Debugger>>,
     print_sink: Option<Box<dyn FnMut(&str)>>,
+    input_reader: Option<Box<dyn FnMut(&str) -> Option<String>>>,
+    input_disabled: bool,
 }
 
 #[derive(Debug)]
@@ -182,16 +248,28 @@ enum ControlFlow {
 
 impl Interpreter {
     pub fn new() -> Self {
+        let mut initial_scope = Scope::new();
+        initial_scope.entries.insert(
+            "PI".to_string(),
+            VariableEntry {
+                val: Value::Real(std::f64::consts::PI),
+                var_type: DataType::Real,
+            },
+        );
+
         Self {
-            scopes: vec![Scope::new()],
-            functions: HashMap::new(),
-            struct_defs: HashMap::new(),
+            scopes: vec![initial_scope],
+            scope_pool: Vec::with_capacity(16),
+            functions: FxHashMap::default(),
+            struct_defs: FxHashMap::default(),
             output: Vec::new(),
             call_stack: Vec::new(),
             current_line: 0,
             current_column: 0,
             debugger: None,
             print_sink: None,
+            input_reader: None,
+            input_disabled: false,
         }
     }
 
@@ -236,6 +314,17 @@ impl Interpreter {
         self.print_sink = Some(sink);
     }
 
+    /// Instala un lector de entrada para LEER (recibe el prompt; devuelve la línea sin salto o None en EOF).
+    pub fn set_input_reader(&mut self, reader: Box<dyn FnMut(&str) -> Option<String>>) {
+        self.input_reader = Some(reader);
+        self.input_disabled = false;
+    }
+
+    /// Deshabilita LEER (p. ej. en DAP, donde stdin es el canal del protocolo).
+    pub fn disable_input(&mut self) {
+        self.input_disabled = true;
+    }
+
     /// Profundidad actual de llamadas a funciones de usuario (0 = programa principal).
     pub fn debug_depth(&self) -> usize {
         self.call_stack.len()
@@ -249,11 +338,11 @@ impl Interpreter {
             let from = from.min(to);
             let mut vars = Vec::new();
             for scope in &self.scopes[from..to] {
-                let mut keys: Vec<&String> = scope.variables.keys().collect();
+                let mut keys: Vec<&String> = scope.entries.keys().collect();
                 keys.sort();
                 for k in keys {
-                    let dt = scope.types.get(k).cloned().unwrap_or(DataType::Void);
-                    vars.push((k.clone(), dt, scope.variables[k].clone()));
+                    let entry = &scope.entries[k];
+                    vars.push((k.clone(), entry.var_type.clone(), entry.val.clone()));
                 }
             }
             vars
@@ -279,53 +368,80 @@ impl Interpreter {
     }
 
     fn push_scope(&mut self) {
-        self.scopes.push(Scope::new());
+        if let Some(mut recycled) = self.scope_pool.pop() {
+            recycled.clear();
+            self.scopes.push(recycled);
+        } else {
+            self.scopes.push(Scope::with_capacity(8));
+        }
     }
 
     fn pop_scope(&mut self) {
         if self.scopes.len() > 1 {
-            self.scopes.pop();
+            let mut s = self.scopes.pop().unwrap();
+            s.clear();
+            if self.scope_pool.len() < 16 {
+                self.scope_pool.push(s);
+            }
         }
     }
 
     fn set_variable(&mut self, name: &str, mut val: Value) -> Result<(), YaguareteError> {
+        if name.eq_ignore_ascii_case("PI") {
+            return Err(self.runtime_error("No se puede reasignar la constante matemática 'PI'"));
+        }
         let cur_line = self.current_line;
         let cur_col = self.current_column;
         // Buscar de adentro hacia afuera si ya existe
         for scope in self.scopes.iter_mut().rev() {
-            if scope.variables.contains_key(name) {
-                if let Some(expected_type) = scope.types.get(name) {
-                    check_type_compatibility(expected_type, &mut val)
-                        .map_err(|e| match e {
-                            YaguareteError::Runtime { message, line, column: _ } if line == 0 => {
-                                YaguareteError::Runtime { message, line: cur_line, column: cur_col }
-                            }
-                            other => other,
-                        })?;
-                }
-                scope.variables.insert(name.to_string(), val);
+            if let Some(entry) = scope.entries.get_mut(name) {
+                check_type_compatibility(&entry.var_type, &mut val)
+                    .map_err(|e| match e {
+                        YaguareteError::Runtime { message, line, column: _ } if line == 0 => {
+                            YaguareteError::Runtime { message, line: cur_line, column: cur_col }
+                        }
+                        other => other,
+                    })?;
+                entry.val = val;
                 return Ok(());
             }
         }
         // Si no existe, declarar en el scope actual
-        self.scopes.last_mut().unwrap().variables.insert(name.to_string(), val);
+        self.scopes.last_mut().unwrap().entries.insert(
+            name.to_string(),
+            VariableEntry {
+                val,
+                var_type: DataType::Void,
+            },
+        );
         Ok(())
     }
 
     fn declare_variable(&mut self, name: &str, data_type: DataType, mut val: Value) -> Result<(), YaguareteError> {
+        if name.eq_ignore_ascii_case("PI") {
+            return Err(self.runtime_error("No se puede reasignar la constante matemática 'PI'"));
+        }
         check_type_compatibility(&data_type, &mut val)
             .map_err(|e| self.with_current_location(e))?;
         let scope = self.scopes.last_mut().unwrap();
-        scope.variables.insert(name.to_string(), val);
-        scope.types.insert(name.to_string(), data_type);
+        scope.entries.insert(
+            name.to_string(),
+            VariableEntry {
+                val,
+                var_type: data_type,
+            },
+        );
         Ok(())
     }
 
     fn get_variable(&self, name: &str) -> Option<Value> {
         for scope in self.scopes.iter().rev() {
-            if let Some(val) = scope.variables.get(name) {
-                return Some(val.clone());
+            if let Some(entry) = scope.entries.get(name) {
+                return Some(entry.val.clone());
             }
+        }
+        if name.eq_ignore_ascii_case("PI") {
+            return Some(Value::Real(std::f64::consts::PI));
         }
         None
     }
@@ -337,8 +453,8 @@ impl Interpreter {
         let cur_line = self.current_line;
         let cur_col = self.current_column;
         for scope in self.scopes.iter_mut().rev() {
-            if let Some(val) = scope.variables.get_mut(name) {
-                return f(val).map_err(|e| match e {
+            if let Some(entry) = scope.entries.get_mut(name) {
+                return f(&mut entry.val).map_err(|e| match e {
                     YaguareteError::Runtime { message, line, column: _ } if line == 0 => {
                         YaguareteError::Runtime { message, line: cur_line, column: cur_col }
                     }
@@ -423,11 +539,11 @@ impl Interpreter {
                 } => {
                     self.functions.insert(
                         name.to_uppercase(),
-                        FunctionData {
+                        std::rc::Rc::new(FunctionData {
                             params: params.clone(),
                             body: body.clone(),
                             return_type: return_type.clone(),
-                        },
+                        }),
                     );
                 }
                 Statement::StructDef { name, fields } => {
@@ -535,11 +651,74 @@ impl Interpreter {
                 Ok(ControlFlow::None)
             }
             Statement::Assign { target, val } => {
+                if let Expression::Variable(name) = target {
+                    if !name.eq_ignore_ascii_case("PI") {
+                        let mut evaluated = self.eval_expression(val)?;
+                        let cur_line = self.current_line;
+                        let cur_col = self.current_column;
+                        for scope in self.scopes.iter_mut().rev() {
+                            if let Some(entry) = scope.entries.get_mut(name) {
+                                check_type_compatibility(&entry.var_type, &mut evaluated)
+                                    .map_err(|e| match e {
+                                        YaguareteError::Runtime { message, line, column: _ } if line == 0 => {
+                                            YaguareteError::Runtime { message, line: cur_line, column: cur_col }
+                                        }
+                                        other => other,
+                                    })?;
+                                entry.val = evaluated;
+                                return Ok(ControlFlow::None);
+                            }
+                        }
+                        // Si no existe, declarar en el scope actual
+                        let scope = self.scopes.last_mut().unwrap();
+                        scope.entries.insert(
+                            name.to_string(),
+                            VariableEntry {
+                                val: evaluated,
+                                var_type: DataType::Void,
+                            },
+                        );
+                        return Ok(ControlFlow::None);
+                    }
+                }
                 let evaluated = self.eval_expression(val)?;
                 self.assign_to_target(target, evaluated)?;
                 Ok(ControlFlow::None)
             }
             Statement::AssignOp { target, op, val } => {
+                if let Expression::Variable(name) = target {
+                    if !name.eq_ignore_ascii_case("PI") {
+                        let right = self.eval_expression(val)?;
+                        let mut handled = false;
+                        for scope in self.scopes.iter_mut().rev() {
+                            if let Some(entry) = scope.entries.get_mut(name) {
+                                match (&mut entry.val, op, &right) {
+                                    (Value::Entero(a), BinaryOp::Suma, Value::Entero(b)) => {
+                                        *a += b;
+                                        handled = true;
+                                    }
+                                    (Value::Entero(a), BinaryOp::Resta, Value::Entero(b)) => {
+                                        *a -= b;
+                                        handled = true;
+                                    }
+                                    (Value::Real(a), BinaryOp::Suma, Value::Real(b)) => {
+                                        *a += b;
+                                        handled = true;
+                                    }
+                                    (Value::Real(a), BinaryOp::Resta, Value::Real(b)) => {
+                                        *a -= b;
+                                        handled = true;
+                                    }
+                                    _ => {}
+                                }
+                                if handled {
+                                    return Ok(ControlFlow::None);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
                 let right = self.eval_expression(val)?;
                 let current = self.eval_expression(target)?;
                 let res = self.eval_binary_op(&current, *op, &right)?;
@@ -547,6 +726,34 @@ impl Interpreter {
                 Ok(ControlFlow::None)
             }
             Statement::Increment { target, is_inc } => {
+                if let Expression::Variable(name) = target {
+                    if !name.eq_ignore_ascii_case("PI") {
+                        let mut handled = false;
+                        for scope in self.scopes.iter_mut().rev() {
+                            if let Some(entry) = scope.entries.get_mut(name) {
+                                match &mut entry.val {
+                                    Value::Entero(n) => {
+                                        if *is_inc { *n += 1; } else { *n -= 1; }
+                                        handled = true;
+                                    }
+                                    Value::Real(r) => {
+                                        if *is_inc { *r += 1.0; } else { *r -= 1.0; }
+                                        handled = true;
+                                    }
+                                    Value::Flotante(f) => {
+                                        if *is_inc { *f += 1.0; } else { *f -= 1.0; }
+                                        handled = true;
+                                    }
+                                    _ => {}
+                                }
+                                if handled {
+                                    return Ok(ControlFlow::None);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
                 let current = self.eval_expression(target)?;
                 let one = Value::Entero(1);
                 let op = if *is_inc { BinaryOp::Suma } else { BinaryOp::Resta };
@@ -560,8 +767,7 @@ impl Interpreter {
                 else_if_branches,
                 else_branch,
             } => {
-                let cond_val = self.eval_expression(condition)?;
-                if cond_val.is_truthy() {
+                if self.eval_condition(condition)? {
                     for s in then_branch {
                         if let flow @ ControlFlow::Return(_) = self.execute_statement(s)? {
                             return Ok(flow);
@@ -571,8 +777,7 @@ impl Interpreter {
                 }
 
                 for (e_cond_expr, e_body) in else_if_branches {
-                    let e_cond = self.eval_expression(e_cond_expr)?;
-                    if e_cond.is_truthy() {
+                    if self.eval_condition(e_cond_expr)? {
                         for s in e_body {
                             if let flow @ ControlFlow::Return(_) = self.execute_statement(s)? {
                                 return Ok(flow);
@@ -594,7 +799,7 @@ impl Interpreter {
             }
             Statement::While { condition, body } => {
                 let active_file = self.find_archivo_in_expr(condition);
-                while self.eval_expression(condition)?.is_truthy() {
+                while self.eval_condition(condition)? {
                     for s in body {
                         if let flow @ ControlFlow::Return(_) = self.execute_statement(s)? {
                             return Ok(flow);
@@ -617,7 +822,7 @@ impl Interpreter {
                     if let Some(ref file) = active_file {
                         file.borrow_mut().notify_loop_step();
                     }
-                    if !self.eval_expression(condition)?.is_truthy() {
+                    if !self.eval_condition(condition)? {
                         break;
                     }
                 }
@@ -632,7 +837,7 @@ impl Interpreter {
                 self.push_scope();
                 self.execute_statement(init)?;
 
-                while self.eval_expression(condition)?.is_truthy() {
+                while self.eval_condition(condition)? {
                     for s in body {
                         if let flow @ ControlFlow::Return(_) = self.execute_statement(s)? {
                             self.pop_scope();
@@ -670,15 +875,17 @@ impl Interpreter {
             Statement::Located { line, column, stmt } => {
                 self.current_line = *line;
                 self.current_column = *column;
-                if let Some(mut dbg) = self.debugger.take() {
-                    let action = dbg.on_statement(*line, self);
-                    self.debugger = Some(dbg);
-                    if action == DebugAction::Abort {
-                        return Err(YaguareteError::Runtime {
-                            message: DEBUG_ABORT_MESSAGE.to_string(),
-                            line: *line,
-                            column: *column,
-                        });
+                if self.debugger.is_some() {
+                    if let Some(mut dbg) = self.debugger.take() {
+                        let action = dbg.on_statement(*line, self);
+                        self.debugger = Some(dbg);
+                        if action == DebugAction::Abort {
+                            return Err(YaguareteError::Runtime {
+                                message: DEBUG_ABORT_MESSAGE.to_string(),
+                                line: *line,
+                                column: *column,
+                            });
+                        }
                     }
                 }
                 self.execute_statement(stmt)
@@ -702,13 +909,36 @@ impl Interpreter {
                 Ok(())
             }
             Expression::IndexAccess { target: inner, index } => {
-                let idx_val = self.eval_expression(index)?;
-                let idx = match idx_val {
-                    Value::Entero(n) => n as usize,
-                    Value::Real(r) => r as usize,
-                    Value::Flotante(f) => f as usize,
-                    _ => {
-                        return Err(self.runtime_error("El índice de acceso debe ser un número entero"));
+                let idx = if let Expression::Variable(idx_name) = index.as_ref() {
+                    let mut found_idx = None;
+                    for scope in self.scopes.iter().rev() {
+                        if let Some(entry) = scope.entries.get(idx_name) {
+                            match &entry.val {
+                                Value::Entero(n) => { found_idx = Some(*n as usize); break; }
+                                Value::Real(r) => { found_idx = Some(*r as usize); break; }
+                                Value::Flotante(f) => { found_idx = Some(*f as usize); break; }
+                                _ => break,
+                            }
+                        }
+                    }
+                    if let Some(i) = found_idx {
+                        i
+                    } else {
+                        let idx_val = self.eval_expression(index)?;
+                        match idx_val {
+                            Value::Entero(n) => n as usize,
+                            Value::Real(r) => r as usize,
+                            Value::Flotante(f) => f as usize,
+                            _ => return Err(self.runtime_error("El índice de acceso debe ser un número entero")),
+                        }
+                    }
+                } else {
+                    let idx_val = self.eval_expression(index)?;
+                    match idx_val {
+                        Value::Entero(n) => n as usize,
+                        Value::Real(r) => r as usize,
+                        Value::Flotante(f) => f as usize,
+                        _ => return Err(self.runtime_error("El índice de acceso debe ser un número entero")),
                     }
                 };
 
@@ -919,21 +1149,44 @@ impl Interpreter {
                 }
             }
             Expression::IndexAccess { target, index } => {
-                let index_val = self.eval_expression(index)?;
-                let idx = match index_val {
-                    Value::Entero(n) => n as usize,
-                    Value::Real(r) => r as usize,
-                    Value::Flotante(f) => f as usize,
-                    _ => {
-                        return Err(self.runtime_error("El índice de vector debe ser un número entero"));
+                let idx = if let Expression::Variable(idx_name) = index.as_ref() {
+                    let mut found_idx = None;
+                    for scope in self.scopes.iter().rev() {
+                        if let Some(entry) = scope.entries.get(idx_name) {
+                            match &entry.val {
+                                Value::Entero(n) => { found_idx = Some(*n as usize); break; }
+                                Value::Real(r) => { found_idx = Some(*r as usize); break; }
+                                Value::Flotante(f) => { found_idx = Some(*f as usize); break; }
+                                _ => break,
+                            }
+                        }
+                    }
+                    if let Some(i) = found_idx {
+                        i
+                    } else {
+                        let index_val = self.eval_expression(index)?;
+                        match index_val {
+                            Value::Entero(n) => n as usize,
+                            Value::Real(r) => r as usize,
+                            Value::Flotante(f) => f as usize,
+                            _ => return Err(self.runtime_error("El índice de vector debe ser un número entero")),
+                        }
+                    }
+                } else {
+                    let index_val = self.eval_expression(index)?;
+                    match index_val {
+                        Value::Entero(n) => n as usize,
+                        Value::Real(r) => r as usize,
+                        Value::Flotante(f) => f as usize,
+                        _ => return Err(self.runtime_error("El índice de vector debe ser un número entero")),
                     }
                 };
 
                 // Optimización rápida: Si el target es una variable directa, leer sin clonar el vector completo
                 if let Expression::Variable(var_name) = target.as_ref() {
                     for scope in self.scopes.iter().rev() {
-                        if let Some(val) = scope.variables.get(var_name) {
-                            match val {
+                        if let Some(entry) = scope.entries.get(var_name) {
+                            match &entry.val {
                                 Value::Vector(vec) => {
                                     if idx >= vec.len() {
                                         return Err(self.runtime_error(format!(
@@ -980,8 +1233,8 @@ impl Interpreter {
                 if member == "largo" {
                     if let Expression::Variable(var_name) = target.as_ref() {
                         for scope in self.scopes.iter().rev() {
-                            if let Some(val) = scope.variables.get(var_name) {
-                                match val {
+                            if let Some(entry) = scope.entries.get(var_name) {
+                                match &entry.val {
                                     Value::Vector(v) => return Ok(Value::Entero(v.len() as i64)),
                                     Value::Cadena(s) => return Ok(Value::Entero(s.chars().count() as i64)),
                                     _ => {}
@@ -1094,6 +1347,8 @@ impl Interpreter {
                     let val = self.eval_expression(&args[0])?;
                     let n = match val {
                         Value::Entero(n) => n,
+                        Value::Real(r) => r as i64,
+                        Value::Flotante(f) => f as i64,
                         _ => {
                             return Err(self.runtime_error("ESPAR requiere un número entero"));
                         }
@@ -1108,6 +1363,8 @@ impl Interpreter {
                     let val = self.eval_expression(&args[0])?;
                     let n = match val {
                         Value::Entero(n) => n,
+                        Value::Real(r) => r as i64,
+                        Value::Flotante(f) => f as i64,
                         _ => {
                             return Err(self.runtime_error("ESIMPAR requiere un número entero"));
                         }
@@ -1131,6 +1388,111 @@ impl Interpreter {
                         return Err(self.runtime_error("Módulo por cero."));
                     }
                     return Ok(Value::Entero(a.rem_euclid(b)));
+                }
+
+                if let Some(v) = self.eval_text_builtin(&upper, args)? {
+                    return Ok(v);
+                }
+
+                // Built-in RAIZCUADRADA
+                if upper == "RAIZCUADRADA" {
+                    if args.len() != 1 {
+                        return Err(self.runtime_error("RAIZCUADRADA requiere exactamente 1 argumento"));
+                    }
+                    let val = self.eval_expression(&args[0])?;
+                    let num = match val {
+                        Value::Entero(n) => n as f64,
+                        Value::Real(r) => r,
+                        Value::Flotante(f) => f as f64,
+                        _ => {
+                            return Err(self.runtime_error("RAIZCUADRADA requiere un argumento numérico"));
+                        }
+                    };
+                    if num < 0.0 {
+                        return Err(self.runtime_error("No se puede calcular la raíz cuadrada de un número negativo."));
+                    }
+                    return Ok(Value::Real(num.sqrt()));
+                }
+
+                // Built-in ABS
+                if upper == "ABS" {
+                    if args.len() != 1 {
+                        return Err(self.runtime_error("ABS requiere exactamente 1 argumento"));
+                    }
+                    let val = self.eval_expression(&args[0])?;
+                    return match val {
+                        Value::Entero(n) => Ok(Value::Entero(n.abs())),
+                        Value::Real(r) => Ok(Value::Real(r.abs())),
+                        Value::Flotante(f) => Ok(Value::Flotante(f.abs())),
+                        _ => Err(self.runtime_error("ABS requiere un argumento numérico")),
+                    };
+                }
+
+                // Built-in POTENCIA
+                if upper == "POTENCIA" {
+                    if args.len() != 2 {
+                        return Err(self.runtime_error("POTENCIA requiere exactamente 2 argumentos (base, exponente)"));
+                    }
+                    let base_val = self.eval_expression(&args[0])?;
+                    let exp_val = self.eval_expression(&args[1])?;
+                    let base = match base_val {
+                        Value::Entero(n) => n as f64,
+                        Value::Real(r) => r,
+                        Value::Flotante(f) => f as f64,
+                        _ => {
+                            return Err(self.runtime_error("POTENCIA requiere argumentos numéricos"));
+                        }
+                    };
+                    let exp = match exp_val {
+                        Value::Entero(n) => n as f64,
+                        Value::Real(r) => r,
+                        Value::Flotante(f) => f as f64,
+                        _ => {
+                            return Err(self.runtime_error("POTENCIA requiere argumentos numéricos"));
+                        }
+                    };
+                    if base < 0.0 && exp.fract() != 0.0 {
+                        return Err(self.runtime_error("No se puede elevar un número negativo a un exponente fraccionario real."));
+                    }
+                    if base == 0.0 && exp < 0.0 {
+                        return Err(self.runtime_error("División por cero: no se puede elevar 0 a un exponente negativo."));
+                    }
+                    return Ok(Value::Real(base.powf(exp)));
+                }
+
+                // Built-in ALEATORIO
+                if upper == "ALEATORIO" {
+                    if args.len() != 2 {
+                        return Err(self.runtime_error("ALEATORIO requiere exactamente 2 argumentos (min, max)"));
+                    }
+                    let min_val = self.eval_expression(&args[0])?;
+                    let max_val = self.eval_expression(&args[1])?;
+                    let min = match min_val {
+                        Value::Entero(n) => n,
+                        Value::Real(r) => r as i64,
+                        Value::Flotante(f) => f as i64,
+                        _ => {
+                            return Err(self.runtime_error("ALEATORIO requiere argumentos numéricos enteros"));
+                        }
+                    };
+                    let max = match max_val {
+                        Value::Entero(n) => n,
+                        Value::Real(r) => r as i64,
+                        Value::Flotante(f) => f as i64,
+                        _ => {
+                            return Err(self.runtime_error("ALEATORIO requiere argumentos numéricos enteros"));
+                        }
+                    };
+                    if min > max {
+                        return Err(self.runtime_error("En ALEATORIO(min, max), 'min' no puede ser mayor que 'max'."));
+                    }
+                    if min == max {
+                        return Ok(Value::Entero(min));
+                    }
+                    let range = (max as i128 - min as i128 + 1) as u128;
+                    let rnd = (next_random_u64() as u128) % range;
+                    let result = (min as i128 + rnd as i128) as i64;
+                    return Ok(Value::Entero(result));
                 }
 
                 // Función de usuario
@@ -1180,6 +1542,220 @@ impl Interpreter {
                     self.current_column = f.call_column;
                 }
                 Ok(ret_val)
+            }
+        }
+    }
+
+    pub fn eval_condition(&mut self, expr: &Expression) -> Result<bool, YaguareteError> {
+        match expr {
+            Expression::LiteralBool(b) => Ok(*b),
+            Expression::Unary { op: UnaryOp::No, expr } => {
+                let inner = self.eval_condition(expr)?;
+                Ok(!inner)
+            }
+            Expression::Binary { left, op, right } => {
+                match op {
+                    BinaryOp::Y => {
+                        if !self.eval_condition(left)? {
+                            return Ok(false);
+                        }
+                        self.eval_condition(right)
+                    }
+                    BinaryOp::O => {
+                        if self.eval_condition(left)? {
+                            return Ok(true);
+                        }
+                        self.eval_condition(right)
+                    }
+                    BinaryOp::Menor => {
+                        // Fast-path 1: dos variables enteras directas (ej: j < size)
+                        if let (Expression::Variable(l_name), Expression::Variable(r_name)) = (left.as_ref(), right.as_ref()) {
+                            let mut l_int = None;
+                            for scope in self.scopes.iter().rev() {
+                                if let Some(entry) = scope.entries.get(l_name) {
+                                    if let Value::Entero(n) = entry.val { l_int = Some(n); break; }
+                                    if let Value::Real(r) = entry.val { l_int = Some(r as i64); break; }
+                                }
+                            }
+                            let mut r_int = None;
+                            for scope in self.scopes.iter().rev() {
+                                if let Some(entry) = scope.entries.get(r_name) {
+                                    if let Value::Entero(n) = entry.val { r_int = Some(n); break; }
+                                    if let Value::Real(r) = entry.val { r_int = Some(r as i64); break; }
+                                }
+                            }
+                            if let (Some(a), Some(b)) = (l_int, r_int) {
+                                return Ok(a < b);
+                            }
+                        }
+
+                        // Fast-path 2: dos accesos por índice al mismo vector (ej: a[j] < a[indice_menor])
+                        if let (
+                            Expression::IndexAccess { target: t1, index: i1 },
+                            Expression::IndexAccess { target: t2, index: i2 },
+                        ) = (left.as_ref(), right.as_ref()) {
+                            if let (Expression::Variable(v1_name), Expression::Variable(v2_name)) = (t1.as_ref(), t2.as_ref()) {
+                                if v1_name == v2_name {
+                                    let idx1 = if let Expression::Variable(n1) = i1.as_ref() {
+                                        let mut found = None;
+                                        for scope in self.scopes.iter().rev() {
+                                            if let Some(e) = scope.entries.get(n1) {
+                                                if let Value::Entero(n) = e.val { found = Some(n as usize); break; }
+                                            }
+                                        }
+                                        found
+                                    } else { None };
+
+                                    let idx2 = if let Expression::Variable(n2) = i2.as_ref() {
+                                        let mut found = None;
+                                        for scope in self.scopes.iter().rev() {
+                                            if let Some(e) = scope.entries.get(n2) {
+                                                if let Value::Entero(n) = e.val { found = Some(n as usize); break; }
+                                            }
+                                        }
+                                        found
+                                    } else { None };
+
+                                    if let (Some(i1_val), Some(i2_val)) = (idx1, idx2) {
+                                        for scope in self.scopes.iter().rev() {
+                                            if let Some(entry) = scope.entries.get(v1_name) {
+                                                if let Value::Vector(vec) = &entry.val {
+                                                    if i1_val < vec.len() && i2_val < vec.len() {
+                                                        match (&vec[i1_val], &vec[i2_val]) {
+                                                            (Value::Entero(a), Value::Entero(b)) => return Ok(a < b),
+                                                            (Value::Real(a), Value::Real(b)) => return Ok(a < b),
+                                                            _ => break,
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        let l = self.eval_expression(left)?;
+                        let r = self.eval_expression(right)?;
+                        match (&l, &r) {
+                            (Value::Entero(a), Value::Entero(b)) => Ok(a < b),
+                            (Value::Real(a), Value::Real(b)) => Ok(a < b),
+                            (Value::Entero(a), Value::Real(b)) => Ok((*a as f64) < *b),
+                            (Value::Real(a), Value::Entero(b)) => Ok(*a < (*b as f64)),
+                            _ => {
+                                let res = self.eval_binary_op(&l, BinaryOp::Menor, &r)?;
+                                Ok(res.is_truthy())
+                            }
+                        }
+                    }
+                    BinaryOp::Mayor => {
+                        let l = self.eval_expression(left)?;
+                        let r = self.eval_expression(right)?;
+                        match (&l, &r) {
+                            (Value::Entero(a), Value::Entero(b)) => Ok(a > b),
+                            (Value::Real(a), Value::Real(b)) => Ok(a > b),
+                            (Value::Entero(a), Value::Real(b)) => Ok((*a as f64) > *b),
+                            (Value::Real(a), Value::Entero(b)) => Ok(*a > (*b as f64)),
+                            _ => {
+                                let res = self.eval_binary_op(&l, BinaryOp::Mayor, &r)?;
+                                Ok(res.is_truthy())
+                            }
+                        }
+                    }
+                    BinaryOp::MenorIgual => {
+                        let l = self.eval_expression(left)?;
+                        let r = self.eval_expression(right)?;
+                        match (&l, &r) {
+                            (Value::Entero(a), Value::Entero(b)) => Ok(a <= b),
+                            (Value::Real(a), Value::Real(b)) => Ok(a <= b),
+                            (Value::Entero(a), Value::Real(b)) => Ok((*a as f64) <= *b),
+                            (Value::Real(a), Value::Entero(b)) => Ok(*a <= (*b as f64)),
+                            _ => {
+                                let res = self.eval_binary_op(&l, BinaryOp::MenorIgual, &r)?;
+                                Ok(res.is_truthy())
+                            }
+                        }
+                    }
+                    BinaryOp::MayorIgual => {
+                        let l = self.eval_expression(left)?;
+                        let r = self.eval_expression(right)?;
+                        match (&l, &r) {
+                            (Value::Entero(a), Value::Entero(b)) => Ok(a >= b),
+                            (Value::Real(a), Value::Real(b)) => Ok(a >= b),
+                            (Value::Entero(a), Value::Real(b)) => Ok((*a as f64) >= *b),
+                            (Value::Real(a), Value::Entero(b)) => Ok(*a >= (*b as f64)),
+                            _ => {
+                                let res = self.eval_binary_op(&l, BinaryOp::MayorIgual, &r)?;
+                                Ok(res.is_truthy())
+                            }
+                        }
+                    }
+                    BinaryOp::IgualQue => {
+                        let l = self.eval_expression(left)?;
+                        let r = self.eval_expression(right)?;
+                        Ok(l == r)
+                    }
+                    BinaryOp::Distinto => {
+                        // Fast-path: a[indice_menor] != a[i]
+                        if let (
+                            Expression::IndexAccess { target: t1, index: i1 },
+                            Expression::IndexAccess { target: t2, index: i2 },
+                        ) = (left.as_ref(), right.as_ref()) {
+                            if let (Expression::Variable(v1_name), Expression::Variable(v2_name)) = (t1.as_ref(), t2.as_ref()) {
+                                if v1_name == v2_name {
+                                    let idx1 = if let Expression::Variable(n1) = i1.as_ref() {
+                                        let mut found = None;
+                                        for scope in self.scopes.iter().rev() {
+                                            if let Some(e) = scope.entries.get(n1) {
+                                                if let Value::Entero(n) = e.val { found = Some(n as usize); break; }
+                                            }
+                                        }
+                                        found
+                                    } else { None };
+
+                                    let idx2 = if let Expression::Variable(n2) = i2.as_ref() {
+                                        let mut found = None;
+                                        for scope in self.scopes.iter().rev() {
+                                            if let Some(e) = scope.entries.get(n2) {
+                                                if let Value::Entero(n) = e.val { found = Some(n as usize); break; }
+                                            }
+                                        }
+                                        found
+                                    } else { None };
+
+                                    if let (Some(i1_val), Some(i2_val)) = (idx1, idx2) {
+                                        for scope in self.scopes.iter().rev() {
+                                            if let Some(entry) = scope.entries.get(v1_name) {
+                                                if let Value::Vector(vec) = &entry.val {
+                                                    if i1_val < vec.len() && i2_val < vec.len() {
+                                                        match (&vec[i1_val], &vec[i2_val]) {
+                                                            (Value::Entero(a), Value::Entero(b)) => return Ok(a != b),
+                                                            (Value::Real(a), Value::Real(b)) => return Ok(a != b),
+                                                            _ => break,
+                                                        }
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        let l = self.eval_expression(left)?;
+                        let r = self.eval_expression(right)?;
+                        Ok(l != r)
+                    }
+                    _ => {
+                        let val = self.eval_expression(expr)?;
+                        Ok(val.is_truthy())
+                    }
+                }
+            }
+            _ => {
+                let val = self.eval_expression(expr)?;
+                Ok(val.is_truthy())
             }
         }
     }
@@ -1274,6 +1850,31 @@ impl Interpreter {
                 }
                 Ok(Value::Entero(a.rem_euclid(b)))
             }
+            BinaryOp::Potencia => {
+                let base = match left {
+                    Value::Entero(n) => *n as f64,
+                    Value::Real(r) => *r,
+                    Value::Flotante(f) => *f as f64,
+                    _ => {
+                        return Err(self.runtime_error("Operador '^' solo compatible con números"));
+                    }
+                };
+                let exp = match right {
+                    Value::Entero(n) => *n as f64,
+                    Value::Real(r) => *r,
+                    Value::Flotante(f) => *f as f64,
+                    _ => {
+                        return Err(self.runtime_error("Operador '^' solo compatible con números"));
+                    }
+                };
+                if base < 0.0 && exp.fract() != 0.0 {
+                    return Err(self.runtime_error("No se puede elevar un número negativo a un exponente fraccionario real."));
+                }
+                if base == 0.0 && exp < 0.0 {
+                    return Err(self.runtime_error("División por cero: no se puede elevar 0 a un exponente negativo."));
+                }
+                Ok(Value::Real(base.powf(exp)))
+            }
             BinaryOp::IgualQue => Ok(Value::Booleano(left == right)),
             BinaryOp::Distinto => Ok(Value::Booleano(left != right)),
             BinaryOp::Menor => match (left, right) {
@@ -1344,20 +1945,31 @@ impl Interpreter {
 
     pub fn get_variables(&self) -> Vec<(String, DataType, Value)> {
         let mut vars = Vec::new();
-        for scope in &self.scopes {
-            let mut keys: Vec<String> = scope.variables.keys().cloned().collect();
+        for (idx, scope) in self.scopes.iter().enumerate() {
+            let mut keys: Vec<String> = scope.entries.keys().cloned().collect();
             keys.sort();
             for k in keys {
-                let val = scope.variables.get(&k).unwrap().clone();
-                let dt = scope.types.get(&k).cloned().unwrap_or(DataType::Void);
-                vars.push((k, dt, val));
+                if idx == 0 && k == "PI" {
+                    continue;
+                }
+                let entry = scope.entries.get(&k).unwrap();
+                vars.push((k, entry.var_type.clone(), entry.val.clone()));
             }
         }
         vars
     }
 
     pub fn reset(&mut self) {
-        self.scopes = vec![Scope::new()];
+        let mut initial_scope = Scope::new();
+        initial_scope.entries.insert(
+            "PI".to_string(),
+            VariableEntry {
+                val: Value::Real(std::f64::consts::PI),
+                var_type: DataType::Real,
+            },
+        );
+        self.scopes = vec![initial_scope];
+        self.scope_pool.clear();
         self.functions.clear();
         self.struct_defs.clear();
         self.output.clear();
@@ -1495,5 +2107,213 @@ pub fn is_input_complete(input: &str) -> bool {
 impl Default for Interpreter {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+
+fn num_to_f64(v: &Value) -> Option<f64> {
+    match v {
+        Value::Entero(n) => Some(*n as f64),
+        Value::Real(r) => Some(*r),
+        Value::Flotante(f) => Some(*f as f64),
+        _ => None,
+    }
+}
+
+impl Interpreter {
+    fn check_arity(&self, name: &str, args: &[Expression], n: usize) -> Result<(), YaguareteError> {
+        if args.len() != n {
+            let plural = if n == 1 { "argumento" } else { "argumentos" };
+            return Err(self.runtime_error(format!("{} requiere exactamente {} {}", name, n, plural)));
+        }
+        Ok(())
+    }
+
+    fn text_arg(&self, name: &str, v: &Value) -> Result<String, YaguareteError> {
+        match v {
+            Value::Cadena(s) => Ok(s.clone()),
+            Value::Caracter(c) => Ok(c.to_string()),
+            _ => Err(self.runtime_error(format!("{} requiere un argumento de tipo CADENA", name))),
+        }
+    }
+
+    fn parse_float_text(s: &str) -> Option<f64> {
+        let t = s.trim();
+        if t.is_empty() {
+            return None;
+        }
+        let l = t.to_lowercase();
+        if l.contains("inf") || l.contains("nan") {
+            return None;
+        }
+        t.parse::<f64>().ok()
+    }
+
+    fn to_f64_conv(&self, v: &Value) -> Result<f64, YaguareteError> {
+        let r = match v {
+            Value::Entero(n) => Some(*n as f64),
+            Value::Real(r) => Some(*r),
+            Value::Flotante(f) => Some(*f as f64),
+            Value::Booleano(b) => Some(if *b { 1.0 } else { 0.0 }),
+            Value::Cadena(s) => Self::parse_float_text(s),
+            Value::Caracter(c) => c.to_digit(10).map(|d| d as f64),
+            _ => None,
+        };
+        r.ok_or_else(|| self.runtime_error(format!("No se puede convertir '{}' a número real", v.to_canonical_string())))
+    }
+
+    fn eval_text_builtin(&mut self, upper: &str, args: &[Expression]) -> Result<Option<Value>, YaguareteError> {
+        match upper {
+            "LEER" => {
+                if args.len() > 1 {
+                    return Err(self.runtime_error("LEER requiere 0 o 1 argumento"));
+                }
+                let prompt = if args.len() == 1 {
+                    let v = self.eval_expression(&args[0])?;
+                    match v {
+                        Value::Cadena(_) | Value::Caracter(_) => self.text_arg("LEER", &v)?,
+                        _ => return Err(self.runtime_error("LEER requiere un mensaje de tipo CADENA")),
+                    }
+                } else {
+                    String::new()
+                };
+                if self.input_disabled {
+                    return Err(self.runtime_error("LEER no está disponible durante la depuración (DAP)."));
+                }
+                let line = match self.input_reader.as_mut() {
+                    Some(r) => r(&prompt),
+                    None => {
+                        use std::io::{BufRead, Write};
+                        let mut out = std::io::stdout();
+                        let _ = write!(out, "{}", prompt);
+                        let _ = out.flush();
+                        let mut buf = String::new();
+                        match std::io::stdin().lock().read_line(&mut buf) {
+                            Ok(0) | Err(_) => None,
+                            Ok(_) => Some(buf),
+                        }
+                    }
+                };
+                let line = line.unwrap_or_default();
+                let line = line.trim_end_matches(&['\r', '\n'][..]).to_string();
+                Ok(Some(parse_input_line(&line)))
+            }
+            "MAYUSCULAS" | "MINUSCULAS" | "RECORTAR" => {
+                self.check_arity(upper, args, 1)?;
+                let v = self.eval_expression(&args[0])?;
+                let s = self.text_arg(upper, &v)?;
+                Ok(Some(Value::Cadena(match upper {
+                    "MAYUSCULAS" => s.to_uppercase(),
+                    "MINUSCULAS" => s.to_lowercase(),
+                    _ => s.trim().to_string(),
+                })))
+            }
+            "DIVIDIR_CADENA" => {
+                self.check_arity(upper, args, 2)?;
+                let a = self.eval_expression(&args[0])?;
+                let b = self.eval_expression(&args[1])?;
+                let s = self.text_arg(upper, &a)?;
+                let sep = self.text_arg(upper, &b)?;
+                if sep.is_empty() {
+                    return Err(self.runtime_error("El separador no puede estar vacío."));
+                }
+                Ok(Some(Value::Vector(s.split(sep.as_str()).map(|p| Value::Cadena(p.to_string())).collect())))
+            }
+            "A_ENTERO" => {
+                self.check_arity(upper, args, 1)?;
+                let v = self.eval_expression(&args[0])?;
+                let fail = |me: &Self| me.runtime_error(format!("No se puede convertir '{}' a ENTERO", v.to_canonical_string()));
+                let n = match &v {
+                    Value::Entero(n) => *n,
+                    Value::Real(r) => r.trunc() as i64,
+                    Value::Flotante(f) => f.trunc() as i64,
+                    Value::Booleano(b) => *b as i64,
+                    Value::Caracter(c) => match c.to_digit(10) {
+                        Some(d) => d as i64,
+                        None => return Err(fail(self)),
+                    },
+                    Value::Cadena(s) => {
+                        let t = s.trim();
+                        if let Ok(n) = t.parse::<i64>() {
+                            n
+                        } else if let Some(f) = Self::parse_float_text(t) {
+                            f.trunc() as i64
+                        } else {
+                            return Err(fail(self));
+                        }
+                    }
+                    _ => return Err(fail(self)),
+                };
+                Ok(Some(Value::Entero(n)))
+            }
+            "A_REAL" => {
+                self.check_arity(upper, args, 1)?;
+                let v = self.eval_expression(&args[0])?;
+                Ok(Some(Value::Real(self.to_f64_conv(&v)?)))
+            }
+            "A_FLOTANTE" => {
+                self.check_arity(upper, args, 1)?;
+                let v = self.eval_expression(&args[0])?;
+                Ok(Some(Value::Flotante(self.to_f64_conv(&v)? as f32)))
+            }
+            "A_CADENA" => {
+                self.check_arity(upper, args, 1)?;
+                let v = self.eval_expression(&args[0])?;
+                Ok(Some(Value::Cadena(v.to_canonical_string())))
+            }
+            "A_BOOLEANO" => {
+                self.check_arity(upper, args, 1)?;
+                let v = self.eval_expression(&args[0])?;
+                let b = match &v {
+                    Value::Booleano(b) => Some(*b),
+                    Value::Entero(n) => Some(*n != 0),
+                    Value::Real(r) => Some(*r != 0.0),
+                    Value::Flotante(f) => Some(*f != 0.0),
+                    Value::Cadena(s) => match s.trim().to_uppercase().as_str() {
+                        "VERDADERO" | "TRUE" => Some(true),
+                        "FALSO" | "FALSE" => Some(false),
+                        _ => None,
+                    },
+                    _ => None,
+                };
+                match b {
+                    Some(b) => Ok(Some(Value::Booleano(b))),
+                    None => Err(self.runtime_error(format!("No se puede convertir '{}' a BOOLEANO", v.to_canonical_string()))),
+                }
+            }
+            "MIN" | "MAX" => {
+                self.check_arity(upper, args, 2)?;
+                let a = self.eval_expression(&args[0])?;
+                let b = self.eval_expression(&args[1])?;
+                let (x, y) = match (num_to_f64(&a), num_to_f64(&b)) {
+                    (Some(x), Some(y)) => (x, y),
+                    _ => return Err(self.runtime_error(format!("{} requiere argumentos numéricos", upper))),
+                };
+                let is_min = upper == "MIN";
+                Ok(Some(match (&a, &b) {
+                    (Value::Entero(p), Value::Entero(q)) => Value::Entero(if is_min { *p.min(q) } else { *p.max(q) }),
+                    (Value::Flotante(p), Value::Flotante(q)) => Value::Flotante(if is_min { (*p).min(*q) } else { (*p).max(*q) }),
+                    _ => Value::Real(if is_min { x.min(y) } else { x.max(y) }),
+                }))
+            }
+            "REDONDEAR" => {
+                if args.is_empty() || args.len() > 2 {
+                    return Err(self.runtime_error("REDONDEAR requiere 1 o 2 argumentos"));
+                }
+                let v = self.eval_expression(&args[0])?;
+                let x = num_to_f64(&v).ok_or_else(|| self.runtime_error("REDONDEAR requiere un argumento numérico"))?;
+                if args.len() == 1 {
+                    return Ok(Some(Value::Entero(x.round() as i64)));
+                }
+                let d = match self.eval_expression(&args[1])? {
+                    Value::Entero(d) if d >= 0 => d,
+                    _ => return Err(self.runtime_error("Los decimales de REDONDEAR deben ser un entero mayor o igual a 0")),
+                };
+                let f = 10f64.powi(d.min(300) as i32);
+                let r = (x * f).round() / f;
+                Ok(Some(Value::Real(if r.is_finite() { r } else { x })))
+            }
+            _ => Ok(None),
+        }
     }
 }

@@ -5,6 +5,7 @@ pub mod lexer;
 pub mod parser;
 pub mod token;
 pub mod value;
+pub mod vm;
 
 pub use error::YaguareteError;
 pub use eval::{
@@ -14,11 +15,12 @@ pub use eval::{
 pub use lexer::Lexer;
 pub use parser::Parser;
 pub use value::Value;
+pub use vm::{run_code_vm, Chunk, Compiler, OpCode, VM};
 
 use std::fs;
 use std::path::Path;
 
-pub const VERSION: &str = "0.1.2";
+pub const VERSION: &str = "0.2.0";
 
 pub fn run_code(source: &str, lenient: bool) -> Result<Vec<String>, YaguareteError> {
     let mut lexer = Lexer::new(source);
@@ -53,6 +55,28 @@ pub fn run_file<P: AsRef<Path>>(path: P, lenient: bool) -> Result<Vec<String>, Y
     })?;
 
     run_code(&source, lenient)
+}
+
+pub fn run_file_vm<P: AsRef<Path>>(path: P, lenient: bool) -> Result<Vec<String>, YaguareteError> {
+    let path_ref = path.as_ref();
+    if !path_ref.to_string_lossy().ends_with(".yaguarete") {
+        return Err(YaguareteError::Runtime {
+            message: format!(
+                "Extensión no válida: '{}'. El lenguaje YAGUARETÉ solo admite archivos con extensión '.yaguarete'.",
+                path_ref.display()
+            ),
+            line: 0,
+            column: 0,
+        });
+    }
+
+    let source = fs::read_to_string(path_ref).map_err(|e| YaguareteError::Runtime {
+        message: format!("No se pudo leer el archivo '{}': {}", path_ref.display(), e),
+        line: 0,
+        column: 0,
+    })?;
+
+    run_code_vm(&source, lenient)
 }
 
 pub fn check_code(source: &str, lenient: bool) -> Result<(), YaguareteError> {

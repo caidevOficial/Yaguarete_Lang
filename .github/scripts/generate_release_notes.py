@@ -35,7 +35,7 @@ def get_version(repo_root: str) -> str:
             for line in f:
                 if line.startswith("__version__"):
                     return line.split("=")[1].strip().strip('"').strip("'")
-    return "0.1.2"
+    return "0.2.0"
 
 
 def calculate_sha256(filepath: str) -> str:

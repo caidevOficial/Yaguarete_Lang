@@ -795,7 +795,15 @@ class Parser:
             op_symbol = "NO" if op_tok.type == TokenType.OP_NO else op_tok.value
             return UnaryOp(op_symbol, operand, op_tok.line, op_tok.column)
 
-        return self.parse_postfix()
+        return self.parse_power()
+
+    def parse_power(self) -> Expression:
+        left = self.parse_postfix()
+        if self.match(TokenType.POTENCIA):
+            op_tok = self.previous_token()
+            right = self.parse_unary()
+            return BinaryOp(left, "^", right, op_tok.line, op_tok.column)
+        return left
 
     def parse_postfix(self) -> Expression:
         expr = self.parse_primary()

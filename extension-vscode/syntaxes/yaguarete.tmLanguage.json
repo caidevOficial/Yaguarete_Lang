@@ -112,7 +112,7 @@
         },
         {
           "name": "keyword.operator.arithmetic.yaguarete",
-          "match": "(?i)\\b(MOD|ESPAR|ESIMPAR)\\b"
+          "match": "(?i)\\b(MOD|ESPAR|ESIMPAR|RAIZCUADRADA|ABS|POTENCIA|ALEATORIO)\\b"
         }
       ]
     },
@@ -135,6 +135,10 @@
           "match": "(?i)\\b(VERDADERO|FALSO|TRUE|FALSE)\\b"
         },
         {
+          "name": "constant.language.math.yaguarete",
+          "match": "(?i)\\b(PI)\\b"
+        },
+        {
           "name": "constant.numeric.float.yaguarete",
           "match": "\\b\\d+\\.\\d+([eE][+-]?\\d+)?\\b"
         },
@@ -149,6 +153,18 @@
         {
           "name": "support.function.builtin.io.yaguarete",
           "match": "(?i)\\b(MOSTRAR|LEER|IMPRIMIR)\\b"
+        },
+        {
+          "name": "support.function.builtin.math.yaguarete",
+          "match": "(?i)\\b(RAIZCUADRADA|ABS|POTENCIA|ALEATORIO|MIN|MAX|REDONDEAR)\\b"
+        },
+        {
+          "name": "support.function.builtin.string.yaguarete",
+          "match": "(?i)\\b(MAYUSCULAS|MINUSCULAS|RECORTAR|DIVIDIR_CADENA)\\b"
+        },
+        {
+          "name": "support.function.builtin.conversion.yaguarete",
+          "match": "(?i)\\b(A_ENTERO|A_REAL|A_FLOTANTE|A_CADENA|A_BOOLEANO)\\b"
         },
         {
           "name": "support.function.builtin.file.yaguarete",
@@ -220,14 +236,14 @@
     "custom_types": {
       "patterns": [
         {
-          "match": "(:)\\s*(?!(?i:ENTERO|FLOTANTE|REAL|CADENA|CARACTER|BOOLEANO|ARCHIVO|VACIO|SIN_RETORNO|NULO|NULL|NONE|VERDADERO|FALSO|TRUE|FALSE)\\b)([a-zA-Z_][a-zA-Z0-9_]*)",
+          "match": "(:)\\s*(?!(?i:ENTERO|FLOTANTE|REAL|CADENA|CARACTER|BOOLEANO|ARCHIVO|VACIO|SIN_RETORNO|NULO|NULL|NONE|VERDADERO|FALSO|TRUE|FALSE|PI|RAIZCUADRADA|ABS|POTENCIA|ALEATORIO|MAYUSCULAS|MINUSCULAS|RECORTAR|DIVIDIR_CADENA|A_ENTERO|A_REAL|A_FLOTANTE|A_CADENA|A_BOOLEANO|MIN|MAX|REDONDEAR|LEER)\\b)([a-zA-Z_][a-zA-Z0-9_]*)",
           "captures": {
             "1": { "name": "punctuation.delimiter.yaguarete" },
             "2": { "name": "entity.name.type.struct.yaguarete" }
           }
         },
         {
-          "match": "(?!(?i:ENTERO|FLOTANTE|REAL|CADENA|CARACTER|BOOLEANO|ARCHIVO|VACIO|SIN_RETORNO|NULO|NULL|NONE|VERDADERO|FALSO|TRUE|FALSE|ALGORITMO|PROGRAMA|INICIO|ESTRUCTURA|FIN|RETORNAR|RETORNO|SI|ENTONCES|SINO|MIENTRAS|PARA|HASTA|PASO|HACER|Y|O|NO|MOD|ESPAR|ESIMPAR|FUNCION|PROCEDIMIENTO|MOSTRAR|LEER|IMPRIMIR)\\b)\\b([A-Z][a-zA-Z0-9_]*)(?=(?:\\s*\\[\\s*\\d*\\s*\\])*\\s+[a-zA-Z_][a-zA-Z0-9_]*\\b)",
+          "match": "(?!(?i:ENTERO|FLOTANTE|REAL|CADENA|CARACTER|BOOLEANO|ARCHIVO|VACIO|SIN_RETORNO|NULO|NULL|NONE|VERDADERO|FALSO|TRUE|FALSE|PI|ALGORITMO|PROGRAMA|INICIO|ESTRUCTURA|FIN|RETORNAR|RETORNO|SI|ENTONCES|SINO|MIENTRAS|PARA|HASTA|PASO|HACER|Y|O|NO|MOD|ESPAR|ESIMPAR|RAIZCUADRADA|ABS|POTENCIA|ALEATORIO|FUNCION|PROCEDIMIENTO|MOSTRAR|LEER|IMPRIMIR|MAYUSCULAS|MINUSCULAS|RECORTAR|DIVIDIR_CADENA|A_ENTERO|A_REAL|A_FLOTANTE|A_CADENA|A_BOOLEANO|MIN|MAX|REDONDEAR)\\b)\\b([A-Z][a-zA-Z0-9_]*)(?=(?:\\s*\\[\\s*\\d*\\s*\\])*\\s+[a-zA-Z_][a-zA-Z0-9_]*\\b)",
           "captures": {
             "1": { "name": "entity.name.type.struct.yaguarete" }
           }

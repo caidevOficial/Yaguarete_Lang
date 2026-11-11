@@ -1,24 +1,25 @@
 INICIO
 
-// ordena mediante algoritmo de selection sort
-FUNCION selection(a[]: ENTERO):ENTERO[]
-    ENTERO size = a.largo
-    PARA(ENTERO i = 0; i < size - 1; i++)
-        ENTERO indice_menor = i
-        PARA(ENTERO j = i + 1; j < size; j++)
-            SI(a[j] < a[indice_menor])
-                indice_menor = j
+    // ordena mediante algoritmo de selection sort
+    FUNCION selection(a[]: ENTERO):ENTERO[]
+        IMPRIMIR("SELECTION SORT")
+        ENTERO size = a.largo
+        PARA(ENTERO i = 0; i < size - 1; i++)
+            ENTERO indice_menor = i
+            PARA(ENTERO j = i + 1; j < size; j++)
+                SI(a[j] < a[indice_menor])
+                    indice_menor = j
+                FIN SI
+            FIN PARA
+            
+            SI(a[indice_menor] != a[i])
+                ENTERO temp = a[i]
+                a[i] = a[indice_menor]
+                a[indice_menor] = temp
             FIN SI
         FIN PARA
-        
-        SI(a[indice_menor] != a[i])
-            ENTERO temp = a[i]
-            a[i] = a[indice_menor]
-            a[indice_menor] = temp
-        FIN SI
-    FIN PARA
-    RETORNAR a
-FIN FUNCION
+        RETORNAR a
+    FIN FUNCION
 
     // Algoritmo Quicksort optimizado (O(N log N))
     // - Pivote central: evita el peor caso O(N^2) y la recursión profunda en listas ya ordenadas o invertidas
@@ -86,6 +87,7 @@ FIN FUNCION
     FIN FUNCION
 
     FUNCION insercion(vector[]: ENTERO): ENTERO[]
+        IMPRIMIR("INSERTION SORT")
         ENTERO n = vector.largo
         ENTERO key = 0
         ENTERO i = 0
@@ -103,7 +105,7 @@ FIN FUNCION
         RETORNAR vector
     FIN FUNCION
 
-ENTERO size = 10000
+ENTERO size = 1000000
 ENTERO vector[size]
 
 PARA(ENTERO i = size; i > 0; i--)
@@ -111,11 +113,11 @@ PARA(ENTERO i = size; i > 0; i--)
 FIN PARA
 
 // Ejecutar Quicksort optimizado
-// vector = ordenar_vector_asc_quick(vector)
+vector = ordenar_vector_asc_quick(vector)
 // vector = insercion(vector)
 
 // Opcional: Probar Selection Sort descomentando la siguiente línea:
-vector = selection(vector)
+// vector = selection(vector)
 
 IMPRIMIR("Total elementos ordenados: " + vector.largo)
 IMPRIMIR("Primer elemento: " + vector[0] + " | Ultimo elemento: " + vector[vector.largo - 1])

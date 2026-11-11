@@ -73,6 +73,7 @@ class TokenType(Enum):
     DIV = auto()           # /
     DIV_ENTERA = auto()    # //
     MOD = auto()           # %
+    POTENCIA = auto()      # ^
     INC = auto()           # ++
     DEC = auto()           # --
 

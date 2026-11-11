@@ -976,11 +976,95 @@ function activate(context) {
                     doc: 'Imprime una o más expresiones por consola.'
                 },
                 {
-                    name: 'LEER',
+                    name: "LEER",
                     kind: vscode.CompletionItemKind.Function,
-                    snippet: 'LEER ${1:variable}',
-                    detail: 'LEER ...',
-                    doc: 'Lee un valor por consola y lo asigna a la variable.'
+                    snippet: "LEER(${1:mensaje})",
+                    detail: "LEER(mensaje?: CADENA): BOOLEANO | ENTERO | REAL | CADENA",
+                    doc: "Lee una línea del teclado y la autoparsea: `BOOLEANO` si es VERDADERO/FALSO/TRUE/FALSE, `ENTERO` si es entero, `REAL` si es decimal, si no `CADENA`. El mensaje opcional se imprime sin salto de línea. No disponible en el depurador DAP."
+                },
+                {
+                    name: "MAYUSCULAS",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "MAYUSCULAS(${1:texto})",
+                    detail: "MAYUSCULAS(texto: CADENA): CADENA",
+                    doc: "Convierte el texto a mayúsculas."
+                },
+                {
+                    name: "MINUSCULAS",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "MINUSCULAS(${1:texto})",
+                    detail: "MINUSCULAS(texto: CADENA): CADENA",
+                    doc: "Convierte el texto a minúsculas."
+                },
+                {
+                    name: "RECORTAR",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "RECORTAR(${1:texto})",
+                    detail: "RECORTAR(texto: CADENA): CADENA",
+                    doc: "Quita los espacios al inicio y al final del texto."
+                },
+                {
+                    name: "DIVIDIR_CADENA",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "DIVIDIR_CADENA(${1:texto}, ${2:separador})",
+                    detail: "DIVIDIR_CADENA(texto: CADENA, separador: CADENA): CADENA[]",
+                    doc: "Divide el texto por el separador (no vacío) y devuelve un vector de cadenas. Ej: `CADENA partes[] = DIVIDIR_CADENA(\"a,b,c\", \",\")`."
+                },
+                {
+                    name: "A_ENTERO",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "A_ENTERO(${1:valor})",
+                    detail: "A_ENTERO(valor): ENTERO",
+                    doc: "Convierte a `ENTERO`: trunca decimales y parsea cadenas."
+                },
+                {
+                    name: "A_REAL",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "A_REAL(${1:valor})",
+                    detail: "A_REAL(valor): REAL",
+                    doc: "Convierte a `REAL`."
+                },
+                {
+                    name: "A_FLOTANTE",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "A_FLOTANTE(${1:valor})",
+                    detail: "A_FLOTANTE(valor): FLOTANTE",
+                    doc: "Convierte a `FLOTANTE`."
+                },
+                {
+                    name: "A_CADENA",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "A_CADENA(${1:valor})",
+                    detail: "A_CADENA(valor): CADENA",
+                    doc: "Convierte cualquier valor a `CADENA`."
+                },
+                {
+                    name: "A_BOOLEANO",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "A_BOOLEANO(${1:valor})",
+                    detail: "A_BOOLEANO(valor): BOOLEANO",
+                    doc: "Convierte a `BOOLEANO`: acepta VERDADERO/FALSO/TRUE/FALSE o números (`!= 0` es verdadero)."
+                },
+                {
+                    name: "MIN",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "MIN(${1:a}, ${2:b})",
+                    detail: "MIN(a, b): ENTERO | REAL",
+                    doc: "Devuelve el menor de dos números: `ENTERO` si ambos son `ENTERO`, si no `REAL`."
+                },
+                {
+                    name: "MAX",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "MAX(${1:a}, ${2:b})",
+                    detail: "MAX(a, b): ENTERO | REAL",
+                    doc: "Devuelve el mayor de dos números: `ENTERO` si ambos son `ENTERO`, si no `REAL`."
+                },
+                {
+                    name: "REDONDEAR",
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: "REDONDEAR(${1:numero})",
+                    detail: "REDONDEAR(numero): ENTERO  |  REDONDEAR(numero, decimales: ENTERO): REAL",
+                    doc: "Redondea half-away-from-zero (2.5 → 3, -2.5 → -3). Con un argumento devuelve `ENTERO`; con `decimales` devuelve `REAL`."
                 },
                 {
                     name: 'ESPAR',
@@ -995,6 +1079,48 @@ function activate(context) {
                     snippet: 'ESIMPAR(${1:numero})',
                     detail: 'ESIMPAR(num: ENTERO): BOOLEANO',
                     doc: 'Devuelve VERDADERO si el número es impar.'
+                },
+                {
+                    name: 'RAIZCUADRADA',
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: 'RAIZCUADRADA(${1:numero})',
+                    detail: 'RAIZCUADRADA(numero: ENTERO | REAL): REAL',
+                    doc: 'Calcula y devuelve la raíz cuadrada de un número como REAL.'
+                },
+                {
+                    name: 'ABS',
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: 'ABS(${1:numero})',
+                    detail: 'ABS(numero: ENTERO | REAL): ENTERO | REAL',
+                    doc: 'Devuelve el valor absoluto de un número.'
+                },
+                {
+                    name: 'POTENCIA',
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: 'POTENCIA(${1:base}, ${2:exponente})',
+                    detail: 'POTENCIA(base: REAL, exponente: REAL): REAL',
+                    doc: 'Eleva \'base\' a la potencia \'exponente\' y devuelve el resultado como REAL.'
+                },
+                {
+                    name: 'ALEATORIO',
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: 'ALEATORIO(${1:min}, ${2:max})',
+                    detail: 'ALEATORIO(min: ENTERO, max: ENTERO): ENTERO',
+                    doc: 'Devuelve un número entero pseudoaleatorio entre \'min\' y \'max\' (ambos inclusive).'
+                },
+                {
+                    name: 'MOD',
+                    kind: vscode.CompletionItemKind.Function,
+                    snippet: 'MOD(${1:dividendo}, ${2:divisor})',
+                    detail: 'MOD(dividendo: ENTERO, divisor: ENTERO): ENTERO',
+                    doc: 'Devuelve el resto de la división entera.'
+                },
+                {
+                    name: 'PI',
+                    kind: vscode.CompletionItemKind.Constant,
+                    snippet: 'PI',
+                    detail: '(constante) PI: REAL = 3.141592653589793',
+                    doc: 'Constante matemática π (pi), relación entre la circunferencia de un círculo y su diámetro.'
                 },
                 {
                     name: 'ABRIR_ARCHIVO',
@@ -1089,6 +1215,31 @@ function activate(context) {
     // -------------------------------------------------------------
     // Ayuda de Parámetros y Firmas (SignatureHelpProvider)
     // -------------------------------------------------------------
+    // Tabla de firmas de funciones built-in (consultada si no hay función de usuario)
+    const builtinSignatures = {
+        "LEER": { label: "LEER(mensaje?: CADENA): BOOLEANO | ENTERO | REAL | CADENA", doc: "Lee una línea del teclado y la autoparsea: `BOOLEANO` si es VERDADERO/FALSO/TRUE/FALSE, `ENTERO` si es entero, `REAL` si es decimal, si no `CADENA`. El mensaje opcional se imprime sin salto de línea. No disponible en el depurador DAP.", params: [["mensaje: CADENA", "Mensaje opcional a mostrar antes de leer (sin salto de línea)."]] },
+        "MAYUSCULAS": { label: "MAYUSCULAS(texto: CADENA): CADENA", doc: "Convierte el texto a mayúsculas.", params: [["texto: CADENA", "Texto a convertir."]] },
+        "MINUSCULAS": { label: "MINUSCULAS(texto: CADENA): CADENA", doc: "Convierte el texto a minúsculas.", params: [["texto: CADENA", "Texto a convertir."]] },
+        "RECORTAR": { label: "RECORTAR(texto: CADENA): CADENA", doc: "Quita los espacios al inicio y al final del texto.", params: [["texto: CADENA", "Texto a recortar."]] },
+        "DIVIDIR_CADENA": { label: "DIVIDIR_CADENA(texto: CADENA, separador: CADENA): CADENA[]", doc: "Divide el texto por el separador (no vacío) y devuelve un vector de cadenas. Ej: `CADENA partes[] = DIVIDIR_CADENA(\"a,b,c\", \",\")`.", params: [["texto: CADENA", "Texto a dividir."], ["separador: CADENA", "Separador (no puede ser vacío)."]] },
+        "A_ENTERO": { label: "A_ENTERO(valor): ENTERO", doc: "Convierte a `ENTERO`: trunca decimales y parsea cadenas.", params: [["valor", "Número o cadena a convertir."]] },
+        "A_REAL": { label: "A_REAL(valor): REAL", doc: "Convierte a `REAL`.", params: [["valor", "Número o cadena a convertir."]] },
+        "A_FLOTANTE": { label: "A_FLOTANTE(valor): FLOTANTE", doc: "Convierte a `FLOTANTE`.", params: [["valor", "Número o cadena a convertir."]] },
+        "A_CADENA": { label: "A_CADENA(valor): CADENA", doc: "Convierte cualquier valor a `CADENA`.", params: [["valor", "Valor a convertir."]] },
+        "A_BOOLEANO": { label: "A_BOOLEANO(valor): BOOLEANO", doc: "Convierte a `BOOLEANO`: acepta VERDADERO/FALSO/TRUE/FALSE o números (`!= 0` es verdadero).", params: [["valor", "Cadena booleana o número."]] },
+        "MIN": { label: "MIN(a, b): ENTERO | REAL", doc: "Devuelve el menor de dos números: `ENTERO` si ambos son `ENTERO`, si no `REAL`.", params: [["a", "Primer número."], ["b", "Segundo número."]] },
+        "MAX": { label: "MAX(a, b): ENTERO | REAL", doc: "Devuelve el mayor de dos números: `ENTERO` si ambos son `ENTERO`, si no `REAL`.", params: [["a", "Primer número."], ["b", "Segundo número."]] },
+        "REDONDEAR": { label: "REDONDEAR(numero): ENTERO  |  REDONDEAR(numero, decimales: ENTERO): REAL", doc: "Redondea half-away-from-zero (2.5 → 3, -2.5 → -3). Con un argumento devuelve `ENTERO`; con `decimales` devuelve `REAL`.", params: [["numero", "Número a redondear."], ["decimales: ENTERO", "Cantidad de decimales (opcional)."]] },
+        "RAIZCUADRADA": { label: "RAIZCUADRADA(numero: ENTERO | REAL): REAL", doc: "Raíz cuadrada de un número no negativo.", params: [["numero: ENTERO | REAL", "Número no negativo."]] },
+        "ABS": { label: "ABS(numero: ENTERO | REAL): ENTERO | REAL", doc: "Valor absoluto preservando el tipo.", params: [["numero: ENTERO | REAL", "Número."]] },
+        "POTENCIA": { label: "POTENCIA(base: ENTERO | REAL, exponente: ENTERO | REAL): REAL", doc: "Eleva base a exponente (equivale a `base ^ exponente`).", params: [["base: ENTERO | REAL", "Base."], ["exponente: ENTERO | REAL", "Exponente."]] },
+        "ALEATORIO": { label: "ALEATORIO(min: ENTERO, max: ENTERO): ENTERO", doc: "Entero pseudoaleatorio entre min y max (inclusive).", params: [["min: ENTERO", "Límite inferior."], ["max: ENTERO", "Límite superior."]] },
+        "MOD": { label: "MOD(dividendo, divisor): ENTERO", doc: "Resto de la división entera.", params: [["dividendo", "Dividendo."], ["divisor", "Divisor."]] },
+        "ESPAR": { label: "ESPAR(numero): BOOLEANO", doc: "VERDADERO si el número es par.", params: [["numero: ENTERO", "Número a evaluar."]] },
+        "ESIMPAR": { label: "ESIMPAR(numero): BOOLEANO", doc: "VERDADERO si el número es impar.", params: [["numero: ENTERO", "Número a evaluar."]] },
+        "ABRIR_ARCHIVO": { label: "ABRIR_ARCHIVO(ruta: CADENA, modo: CADENA): ARCHIVO", doc: "Abre un archivo y devuelve su manejador.", params: [["ruta: CADENA", "Ruta del archivo."], ["modo: CADENA", "\"lectura\", \"escritura\" o \"anexo\"."]] },
+    };
+
     const signatureHelpProvider = vscode.languages.registerSignatureHelpProvider(YAGUARETE_SELECTOR, {
         provideSignatureHelp(document, position, token, context) {
             if (isInCommentOrString(document, position)) return null;
@@ -1152,6 +1303,18 @@ function activate(context) {
                 return sigHelp;
             }
 
+            // Función built-in
+            const bi = builtinSignatures[fnName.toUpperCase()];
+            if (bi) {
+                const signatureInfo = new vscode.SignatureInformation(bi.label, new vscode.MarkdownString(bi.doc));
+                signatureInfo.parameters = bi.params.map(([pl, pd]) => new vscode.ParameterInformation(pl, new vscode.MarkdownString(pd)));
+                const sigHelp = new vscode.SignatureHelp();
+                sigHelp.signatures = [signatureInfo];
+                sigHelp.activeSignature = 0;
+                sigHelp.activeParameter = Math.min(paramIndex, Math.max(0, signatureInfo.parameters.length - 1));
+                return sigHelp;
+            }
+
             return null;
         }
     }, '(', ',');
@@ -1175,10 +1338,27 @@ function activate(context) {
         'PROCEDIMIENTO': '```yaguarete\nPROCEDIMIENTO nombre(p1: tipo)\n    // bloque\nFIN PROCEDIMIENTO\n```\nDefine un procedimiento (sin valor de retorno).',
         'MOSTRAR': '```yaguarete\nMOSTRAR "Mensaje", variable\n```\nImprime valores en la consola de salida estándar.',
         'IMPRIMIR': '```yaguarete\nIMPRIMIR("Mensaje" + variable)\n```\nImprime valores en la consola de salida estándar.',
-        'LEER': '```yaguarete\nLEER variable\n```\nLee un dato ingresado por el usuario por teclado y lo almacena en la variable.',
+        "LEER": "```yaguarete\nLEER(mensaje?: CADENA): BOOLEANO | ENTERO | REAL | CADENA\n```\nLee una línea del teclado y la autoparsea: `BOOLEANO` si es VERDADERO/FALSO/TRUE/FALSE, `ENTERO` si es entero, `REAL` si es decimal, si no `CADENA`. El mensaje opcional se imprime sin salto de línea. No disponible en el depurador DAP.",
+        "MAYUSCULAS": "```yaguarete\nMAYUSCULAS(texto: CADENA): CADENA\n```\nConvierte el texto a mayúsculas.",
+        "MINUSCULAS": "```yaguarete\nMINUSCULAS(texto: CADENA): CADENA\n```\nConvierte el texto a minúsculas.",
+        "RECORTAR": "```yaguarete\nRECORTAR(texto: CADENA): CADENA\n```\nQuita los espacios al inicio y al final del texto.",
+        "DIVIDIR_CADENA": "```yaguarete\nDIVIDIR_CADENA(texto: CADENA, separador: CADENA): CADENA[]\n```\nDivide el texto por el separador (no vacío) y devuelve un vector de cadenas. Ej: `CADENA partes[] = DIVIDIR_CADENA(\"a,b,c\", \",\")`.",
+        "A_ENTERO": "```yaguarete\nA_ENTERO(valor): ENTERO\n```\nConvierte a `ENTERO`: trunca decimales y parsea cadenas.",
+        "A_REAL": "```yaguarete\nA_REAL(valor): REAL\n```\nConvierte a `REAL`.",
+        "A_FLOTANTE": "```yaguarete\nA_FLOTANTE(valor): FLOTANTE\n```\nConvierte a `FLOTANTE`.",
+        "A_CADENA": "```yaguarete\nA_CADENA(valor): CADENA\n```\nConvierte cualquier valor a `CADENA`.",
+        "A_BOOLEANO": "```yaguarete\nA_BOOLEANO(valor): BOOLEANO\n```\nConvierte a `BOOLEANO`: acepta VERDADERO/FALSO/TRUE/FALSE o números (`!= 0` es verdadero).",
+        "MIN": "```yaguarete\nMIN(a, b): ENTERO | REAL\n```\nDevuelve el menor de dos números: `ENTERO` si ambos son `ENTERO`, si no `REAL`.",
+        "MAX": "```yaguarete\nMAX(a, b): ENTERO | REAL\n```\nDevuelve el mayor de dos números: `ENTERO` si ambos son `ENTERO`, si no `REAL`.",
+        "REDONDEAR": "```yaguarete\nREDONDEAR(numero): ENTERO\nREDONDEAR(numero, decimales: ENTERO): REAL\n```\nRedondea half-away-from-zero (2.5 → 3, -2.5 → -3). Con un argumento devuelve `ENTERO`; con `decimales` devuelve `REAL`.",
         'MOD': '```yaguarete\nresultado = a MOD b\n```\nCalcula el resto de la división entera entre dos números.',
         'ESPAR': '```yaguarete\nESPAR(numero): BOOLEANO\n```\nRetorna `VERDADERO` si el argumento entero es par, `FALSO` si no.',
         'ESIMPAR': '```yaguarete\nESIMPAR(numero): BOOLEANO\n```\nRetorna `VERDADERO` si el argumento entero es impar, `FALSO` si no.',
+        'RAIZCUADRADA': '```yaguarete\nRAIZCUADRADA(numero: ENTERO | REAL): REAL\n```\nCalcula y devuelve la raíz cuadrada de un número no negativo como `REAL`.',
+        'ABS': '```yaguarete\nABS(numero: ENTERO | REAL): ENTERO | REAL\n```\nDevuelve el valor absoluto de un número preservando su tipo (`ENTERO` o `REAL`).',
+        'POTENCIA': '```yaguarete\nPOTENCIA(base: ENTERO | REAL, exponente: ENTERO | REAL): REAL\n```\nEleva `base` a la potencia `exponente` (equivalente a `base ^ exponente`) y devuelve el resultado como `REAL`.',
+        'ALEATORIO': '```yaguarete\nALEATORIO(min: ENTERO, max: ENTERO): ENTERO\n```\nDevuelve un número entero pseudoaleatorio entre `min` y `max` (ambos inclusive).',
+        'PI': '```yaguarete\n(constante) REAL PI = 3.141592653589793\n```\nConstante matemática π (pi), relación entre la circunferencia de un círculo y su diámetro.',
         'ABRIR_ARCHIVO': '```yaguarete\nABRIR_ARCHIVO(ruta: CADENA, modo: CADENA): ARCHIVO\n```\nAbre un archivo y devuelve su manejador.',
         'ESTRUCTURA': '```yaguarete\nESTRUCTURA Nombre:\n    CADENA campo1\n    ENTERO campo2\nFIN ESTRUCTURA\n```\nDefine una estructura de datos personalizada con campos fuertemente tipados.',
         'INICIO': 'Marca el comienzo del programa principal.',
@@ -1340,7 +1520,11 @@ function activate(context) {
             const ignoredKeywords = new Set([
                 'INICIO', 'FIN', 'SI', 'ENTONCES', 'SINO', 'MIENTRAS', 'PARA', 'HASTA', 'PASO', 'HACER',
                 'VERDADERO', 'FALSO', 'MOD', 'Y', 'O', 'NO', 'RETORNAR', 'ALGORITMO',
-                'ENTERO', 'FLOTANTE', 'REAL', 'CADENA', 'CARACTER', 'BOOLEANO', 'ARCHIVO', 'VOID'
+                'ENTERO', 'FLOTANTE', 'REAL', 'CADENA', 'CARACTER', 'BOOLEANO', 'ARCHIVO', 'VOID',
+                'RAIZCUADRADA', 'ABS', 'POTENCIA', 'ALEATORIO', 'PI',
+                'LEER', 'MAYUSCULAS', 'MINUSCULAS', 'RECORTAR', 'DIVIDIR_CADENA',
+                'A_ENTERO', 'A_REAL', 'A_FLOTANTE', 'A_CADENA', 'A_BOOLEANO',
+                'MIN', 'MAX', 'REDONDEAR'
             ]);
             if (ignoredKeywords.has(word.toUpperCase())) {
                 return null;

@@ -234,7 +234,7 @@ def install():
     try:
         from pseudocode import __version__ as yaguarete_version
     except Exception:
-        yaguarete_version = "0.1.2"
+        yaguarete_version = "0.2.0"
 
     user_home = os.path.expanduser("~")
     current_folder = f"yaguarete.yaguarete-language-support-{yaguarete_version}"

@@ -10,10 +10,10 @@
 
 <p align="center">
   <a href="#-autoría-y-créditos"><img src="https://img.shields.io/badge/Autor-%3CFacu%20Falcone%3E-0f172a?style=for-the-badge" alt="Autor" /></a>
-  <img src="https://img.shields.io/badge/Versi%C3%B3n-0.1.2-0066ff?style=for-the-badge" alt="Versión" />
+  <img src="https://img.shields.io/badge/Versi%C3%B3n-0.2.0-0066ff?style=for-the-badge" alt="Versión" />
   <img src="https://img.shields.io/badge/Extensi%C3%B3n-.yaguarete-38bdf8?style=for-the-badge" alt="Extensión .yaguarete" />
   <img src="https://img.shields.io/badge/VS_Code-Extensi%C3%B3n_Oficial-1e3a8a?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="VS Code Extension" />
-  <img src="https://img.shields.io/badge/Tests-87%20passing-22c55e?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-107%20passing-22c55e?style=for-the-badge" alt="Tests" />
   <img src="https://img.shields.io/badge/Licencia-GPL--3.0-2563eb?style=for-the-badge" alt="Licencia GPL-3.0" />
 </p>
 
@@ -65,8 +65,8 @@ Permite escribir algoritmos estructurados con palabras clave naturales en españ
 ## ✨ Características Principales
 
 - 🛡️ **Fuertemente Tipado:** Validación estática de variables, firmas de funciones, aridad y tipos de retorno.
-- 🚀 **Motor Nativo en Rust (v0.1.2):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad (~300x más rápido en algoritmos complejos: QuickSort en 1 ms frente a 3.240 ms previos) y cero dependencias de runtime.
-- ⚡ **Evaluación en Cortocircuito (v0.1.2):** Operadores lógicos `Y` y `O` con evaluación en cortocircuito (*short-circuit evaluation*), permitiendo guardas seguras en bucles y estructuras sin evaluaciones innecesarias ni desbordamientos de índice.
+- 🚀 **Motor Nativo y Máquina Virtual Bytecode en Rust (v0.2.0):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad con nuevo motor de Bytecode VM (hasta 5.7x más rápido en algoritmos intensivos: Selection Sort 10k en 6.9s frente a 39.5s originales) y selección de motor vía `--engine <vm|ast>`.
+- ⚡ **Evaluación en Cortocircuito (v0.1.2+):** Operadores lógicos `Y` y `O` con evaluación en cortocircuito (*short-circuit evaluation*), permitiendo guardas seguras en bucles y estructuras sin evaluaciones innecesarias ni desbordamientos de índice.
 - 💻 **Consola Interactiva REPL:** Nuevo entorno interactivo `yaguarete repl` para evaluar expresiones y algoritmos didácticos al vuelo con tabla de variables (`:vars`) y balanceo multilínea.
 - 📐 **Precisión Numérica Determinística:** Distinción clara entre `FLOTANTE` (IEEE 754 de 32 bits) y `REAL` (IEEE 754 de 64 bits de doble precisión).
 - 🧩 **Arreglos Dinámicos y Matrices:** Vectores (`TIPO[]`) y matrices bidimensionales (`TIPO[][]`) con introspección mediante la propiedad `.largo` y concatenación con el operador `+`.
@@ -109,10 +109,10 @@ YAGUARETÉ ofrece paquetes oficiales nativos y universales para entornos Linux:
 Recomendado para **Ubuntu, Debian, Linux Mint, Pop!_OS, Kali Linux** y derivados:
 ```bash
 # Instalación con apt (resuelve dependencias automáticamente)
-sudo apt install ./yaguarete_0.1.2_amd64.deb
+sudo apt install ./yaguarete_0.2.0_amd64.deb
 
 # O mediante dpkg:
-# sudo dpkg -i yaguarete_0.1.2_amd64.deb
+# sudo dpkg -i yaguarete_0.2.0_amd64.deb
 ```
 Este paquete instala el binario en `/usr/bin/yaguarete`, registra la asociación MIME del archivo `.yaguarete`, el icono del lenguaje y la entrada de escritorio para aplicaciones del sistema.
 
@@ -120,8 +120,8 @@ Este paquete instala el binario en `/usr/bin/yaguarete`, registra la asociación
 Compatible con cualquier distribución (Arch Linux, Fedora, openSUSE, Gentoo, Alpine, etc.):
 ```bash
 # Descomprimir el paquete
-tar -xzf yaguarete-0.1.2-linux-x86_64.tar.gz
-cd yaguarete-0.1.2-linux-x86_64
+tar -xzf yaguarete-0.2.0-linux-x86_64.tar.gz
+cd yaguarete-0.2.0-linux-x86_64
 
 # Instalación para el usuario actual (~/.local/bin):
 chmod +x install.sh
@@ -200,6 +200,7 @@ yaguarete run sort.yaguarete --time-full
 > La opción `--time` puede ubicarse en cualquier posición de la línea de comandos. También funciona al invocar el archivo directamente: `yaguarete sort.yaguarete --time-full`. El desglose respeta singular/plural (`1 Hora`, `2 Horas`).
 
 *Otras opciones útiles:*
+- `--engine <vm|ast>`: Selecciona el motor de ejecución. Por defecto utiliza `vm` (Máquina Virtual Bytecode de alto rendimiento, hasta 5.7x más rápida). Para usar el intérprete AST tradicional, indicar `--engine ast`.
 - `--lenient` / `-l`: Modo permisivo para pseudocódigo informal.
 
 ### 2. `yaguarete repl` — Consola Interactiva REPL
@@ -304,7 +305,7 @@ yaguarete tokens mi_algoritmo.yaguarete
 
 ## 🎨 Extensión Oficial para Visual Studio Code
 
-El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` (disponible como paquete `yaguarete-language-support-0.1.2.vsix`):
+El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` (disponible como paquete `yaguarete-language-support-0.2.0.vsix`):
 
 <p align="center">
   <img src="yaguarete_icon.png" width="80" alt="VS Code Extension" />
@@ -328,7 +329,7 @@ El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` 
 
 #### Instalación Manual de la Extensión:
 ```bash
-code --install-extension extension-vscode/yaguarete-language-support-0.1.2.vsix --force
+code --install-extension extension-vscode/yaguarete-language-support-0.2.0.vsix --force
 ```
 
 ---
@@ -558,6 +559,7 @@ Ultimo nodo (cola): Nodo 5
    | `/` | División real | `REAL` (`FLOTANTE` si interviene un `FLOTANTE`) | `10 / 4` → `2.5` |
    | `//` | **División entera** (redondea hacia abajo, hacia −∞) | Siempre `ENTERO` | `10 // 3` → `3`, `-7 // 2` → `-4` |
    | `%` | **Módulo** (resto de la división entera) | `ENTERO` | `10 % 3` → `1` |
+   | `^` | **Potencia / Exponenciación** | `REAL` | `2 ^ 3` → `8.0`, `9 ^ 0.5` → `3.0` |
 
    - `//` y `%` exigen operandos numéricos; si algún operando es `FLOTANTE` o `REAL`, su parte decimal se descarta antes de operar (`7.5 // 2` → `3`).
    - Ambos arrojan un error claro en tiempo de ejecución ante **división por cero** (`División por cero.` / `Módulo por cero.`).
@@ -694,13 +696,67 @@ salida.CERRAR_ARCHIVO()
 
 ### 5. Funciones Incorporadas (Built-ins)
 
+#### Entrada / Salida y Archivos
+
 | Función | Parámetros | Tipo Retorno | Descripción |
 | :--- | :--- | :--- | :--- |
 | `IMPRIMIR(...)` | Uno o varios valores | `VOID` | Muestra valores en la salida estándar. |
+| `LEER()` / `LEER(mensaje)` | `CADENA` (opcional) | `BOOLEANO`, `ENTERO`, `REAL` o `CADENA` | Lee una línea del teclado y la autoparsea: `BOOLEANO` si es `VERDADERO`/`FALSO`/`TRUE`/`FALSE`, `ENTERO` si es entero, `REAL` si es decimal, si no `CADENA`. El mensaje se imprime sin salto de línea. No disponible en el depurador DAP. |
 | `ABRIR_ARCHIVO(ruta, modo)` | `CADENA`, `CADENA` | `ARCHIVO` | Abre un archivo en `"lectura"`, `"escritura"` o `"anexo"`. |
+
+#### Cadenas
+
+| Función | Parámetros | Tipo Retorno | Descripción |
+| :--- | :--- | :--- | :--- |
+| `MAYUSCULAS(texto)` | `CADENA` | `CADENA` | Convierte el texto a mayúsculas. |
+| `MINUSCULAS(texto)` | `CADENA` | `CADENA` | Convierte el texto a minúsculas. |
+| `RECORTAR(texto)` | `CADENA` | `CADENA` | Quita los espacios al inicio y al final. |
+| `DIVIDIR_CADENA(texto, separador)` | `CADENA`, `CADENA` (no vacío) | `CADENA[]` | Divide el texto por el separador. Ej.: `CADENA partes[] = DIVIDIR_CADENA("a,b,c", ",")`. |
+
+#### Conversión de Tipos
+
+| Función | Parámetros | Tipo Retorno | Descripción |
+| :--- | :--- | :--- | :--- |
+| `A_ENTERO(valor)` | Número o `CADENA` | `ENTERO` | Trunca decimales y parsea cadenas. |
+| `A_REAL(valor)` | Número o `CADENA` | `REAL` | Convierte a `REAL`. |
+| `A_FLOTANTE(valor)` | Número o `CADENA` | `FLOTANTE` | Convierte a `FLOTANTE`. |
+| `A_CADENA(valor)` | Cualquiera | `CADENA` | Convierte el valor a texto. |
+| `A_BOOLEANO(valor)` | `VERDADERO`/`FALSO`/`TRUE`/`FALSE` o número | `BOOLEANO` | Los números `!= 0` son verdaderos. |
+
+#### Matemáticas
+
+| Función | Parámetros | Tipo Retorno | Descripción |
+| :--- | :--- | :--- | :--- |
 | `ESPAR(numero)` | `ENTERO` o `REAL` | `BOOLEANO` | Retorna `VERDADERO` si el número es par. |
 | `ESIMPAR(numero)` | `ENTERO` o `REAL` | `BOOLEANO` | Retorna `VERDADERO` si el número es impar. |
 | `MOD(dividendo, divisor)` | Numéricos | `ENTERO` | Retorna el resto de la división entera. |
+| `RAIZCUADRADA(numero)` | `ENTERO` o `REAL` | `REAL` | Calcula la raíz cuadrada de un número no negativo. |
+| `POTENCIA(base, exponente)` | `ENTERO` o `REAL` | `REAL` | Eleva `base` a `exponente` (equivalente a `base ^ exponente`). |
+| `ABS(numero)` | `ENTERO` o `REAL` | `ENTERO` o `REAL` | Retorna el valor absoluto preservando el tipo numérico. |
+| `ALEATORIO(min, max)` | `ENTERO`, `ENTERO` | `ENTERO` | Retorna un número entero aleatorio entre `min` y `max` inclusive. |
+| `MIN(a, b)` / `MAX(a, b)` | Numéricos | `ENTERO` si ambos son `ENTERO`, si no `REAL` | Retorna el menor / mayor de dos números. |
+| `REDONDEAR(numero)` | `ENTERO` o `REAL` | `ENTERO` | Redondeo half-away-from-zero (`2.5` → `3`, `-2.5` → `-3`). |
+| `REDONDEAR(numero, decimales)` | Numérico, `ENTERO` | `REAL` | Redondea a la cantidad de decimales indicada. |
+
+#### Ejemplo: `LEER` + `DIVIDIR_CADENA` + `A_ENTERO`
+
+```yaguarete
+INICIO
+    CADENA linea = LEER("Ingrese números separados por coma: ")
+    CADENA partes[] = DIVIDIR_CADENA(linea, ",")
+    ENTERO suma = 0
+    PARA (ENTERO i = 0; i < partes.largo; i++)
+        suma = suma + A_ENTERO(RECORTAR(partes[i]))
+    FIN PARA
+    IMPRIMIR("Suma: " + A_CADENA(suma))
+FIN
+```
+
+#### Constantes Matemáticas Incorporadas
+
+| Constante | Tipo | Valor | Descripción |
+| :--- | :--- | :--- | :--- |
+| `PI` | `REAL` | `3.141592653589793` | Constante matemática π (relación entre la circunferencia de un círculo y su diámetro). |
 
 ---
 

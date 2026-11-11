@@ -193,6 +193,172 @@ class TestOperators(unittest.TestCase):
         run_code(code, output_collector=out)
         self.assertEqual(out, ["VAL: 42"])
 
+    def test_operador_potencia_precedencia_y_asociatividad(self):
+        code = """
+        INICIO
+            REAL p1 = 2 ^ 3
+            REAL p2 = -2 ^ 2
+            REAL p3 = (-2) ^ 2
+            REAL p4 = 2 ^ -3
+            REAL p5 = 2 ^ 3 ^ 2
+            REAL p6 = 9 ^ 0.5
+            IMPRIMIR("P1: " + p1)
+            IMPRIMIR("P2: " + p2)
+            IMPRIMIR("P3: " + p3)
+            IMPRIMIR("P4: " + p4)
+            IMPRIMIR("P5: " + p5)
+            IMPRIMIR("P6: " + p6)
+        FIN
+        """
+        out = []
+        run_code(code, output_collector=out)
+        self.assertEqual(out, [
+            "P1: 8.0",
+            "P2: -4.0",
+            "P3: 4.0",
+            "P4: 0.125",
+            "P5: 512.0",
+            "P6: 3.0",
+        ])
+
+    def test_operador_potencia_errores(self):
+        code_zero_neg = """
+        INICIO
+            REAL r = 0 ^ -2
+        FIN
+        """
+        with self.assertRaises(PseudoRuntimeError) as ctx:
+            run_code(code_zero_neg)
+        self.assertIn("División por cero", str(ctx.exception))
+
+        code_neg_frac = """
+        INICIO
+            REAL r = (-4) ^ 0.5
+        FIN
+        """
+        with self.assertRaises(PseudoRuntimeError) as ctx:
+            run_code(code_neg_frac)
+        self.assertIn("exponente fraccionario", str(ctx.exception))
+
+        code_type_err = """
+        INICIO
+            REAL r = "texto" ^ 2
+        FIN
+        """
+        with self.assertRaises(PseudoTypeError):
+            run_code(code_type_err, lenient=False)
+
+    def test_funcion_potencia(self):
+        code = """
+        INICIO
+            REAL a = POTENCIA(2, 10)
+            REAL b = POTENCIA(4, 0.5)
+            REAL c = POTENCIA(2, -2)
+            IMPRIMIR("A: " + a)
+            IMPRIMIR("B: " + b)
+            IMPRIMIR("C: " + c)
+        FIN
+        """
+        out = []
+        run_code(code, output_collector=out)
+        self.assertEqual(out, ["A: 1024.0", "B: 2.0", "C: 0.25"])
+
+        with self.assertRaises(PseudoRuntimeError):
+            run_code("INICIO\nREAL r = POTENCIA(0, -1)\nFIN")
+
+        with self.assertRaises(PseudoRuntimeError):
+            run_code("INICIO\nREAL r = POTENCIA(-4, 0.5)\nFIN")
+
+        with self.assertRaises(PseudoTypeError):
+            run_code("INICIO\nREAL r = POTENCIA(2)\nFIN", lenient=False)
+
+    def test_funcion_raiz_cuadrada(self):
+        code = """
+        INICIO
+            REAL r1 = RAIZCUADRADA(16)
+            REAL r2 = RAIZCUADRADA(2.25)
+            REAL r3 = RAIZCUADRADA(0)
+            IMPRIMIR("R1: " + r1)
+            IMPRIMIR("R2: " + r2)
+            IMPRIMIR("R3: " + r3)
+        FIN
+        """
+        out = []
+        run_code(code, output_collector=out)
+        self.assertEqual(out, ["R1: 4.0", "R2: 1.5", "R3: 0.0"])
+
+        with self.assertRaises(PseudoRuntimeError) as ctx:
+            run_code("INICIO\nREAL r = RAIZCUADRADA(-9)\nFIN")
+        self.assertIn("número negativo", str(ctx.exception))
+
+        with self.assertRaises(PseudoTypeError):
+            run_code('INICIO\nREAL r = RAIZCUADRADA("abc")\nFIN', lenient=False)
+
+    def test_funcion_abs(self):
+        code = """
+        INICIO
+            ENTERO e1 = ABS(-42)
+            ENTERO e2 = ABS(15)
+            REAL r1 = ABS(-3.5)
+            FLOTANTE f1 = -2.5
+            FLOTANTE f2 = ABS(f1)
+            IMPRIMIR("E1: " + e1)
+            IMPRIMIR("E2: " + e2)
+            IMPRIMIR("R1: " + r1)
+            IMPRIMIR("F2: " + f2)
+        FIN
+        """
+        out = []
+        run_code(code, output_collector=out)
+        self.assertEqual(out, ["E1: 42", "E2: 15", "R1: 3.5", "F2: 2.5"])
+
+        with self.assertRaises(PseudoTypeError):
+            run_code('INICIO\nENTERO a = ABS("hola")\nFIN', lenient=False)
+
+    def test_funcion_aleatorio(self):
+        code = """
+        INICIO
+            ENTERO fijo = ALEATORIO(7, 7)
+            ENTERO rango = ALEATORIO(1, 10)
+            BOOLEANO en_rango = (rango >= 1) Y (rango <= 10)
+            IMPRIMIR("FIJO: " + fijo)
+            IMPRIMIR("RANGO: " + en_rango)
+        FIN
+        """
+        out = []
+        run_code(code, output_collector=out)
+        self.assertEqual(out, ["FIJO: 7", "RANGO: VERDADERO"])
+
+        with self.assertRaises(PseudoRuntimeError) as ctx:
+            run_code("INICIO\nENTERO x = ALEATORIO(10, 5)\nFIN")
+        self.assertIn("no puede ser mayor", str(ctx.exception))
+
+        with self.assertRaises(PseudoTypeError):
+            run_code("INICIO\nENTERO x = ALEATORIO(1)\nFIN", lenient=False)
+
+    def test_constante_pi(self):
+        code = """
+        INICIO
+            REAL radio = 2.0
+            REAL area = PI * (radio ^ 2)
+            BOOLEANO igual = (PI == pi) Y (PI > 3.14159) Y (PI < 3.14160)
+            BOOLEANO area_ok = (area > 12.566) Y (area < 12.567)
+            IMPRIMIR("IGUAL: " + igual)
+            IMPRIMIR("AREA_OK: " + area_ok)
+        FIN
+        """
+        out = []
+        run_code(code, output_collector=out)
+        self.assertEqual(out, ["IGUAL: VERDADERO", "AREA_OK: VERDADERO"])
+
+        with self.assertRaises(PseudoTypeError) as ctx:
+            run_code("INICIO\nPI = 3.14\nFIN", lenient=False)
+        self.assertIn("constante matemática 'PI'", str(ctx.exception))
+
+        with self.assertRaises(PseudoTypeError) as ctx2:
+            run_code("INICIO\nREAL PI = 3.14\nFIN", lenient=False)
+        self.assertIn("constante matemática 'PI'", str(ctx2.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
