@@ -305,6 +305,7 @@ fn test_estructura_definir_declarar_y_asignar() {
     assert!(out.iter().any(|s| s.contains("EDITORIAL: Sur")));
     assert!(out.iter().any(|s| s.contains("EDICION: 1")));
     assert!(out.iter().any(|s| s.contains("Libro{")));
+    assert!(out.iter().any(|s| s.contains("sinopsis: NULO")));
 }
 
 #[test]
@@ -511,4 +512,352 @@ fn test_estructura_retorno_con_comentarios_o_sentencia_no_decl() {
 
     let out = run_code(code, false).unwrap();
     assert!(out.iter().any(|s| s.contains("VALOR: 42")));
+}
+
+#[test]
+fn test_estructura_inicializacion_campos_primitivos_nulo() {
+    let code = r#"
+    ESTRUCTURA TiposPrimitivos:
+        ENTERO f_entero
+        REAL f_real
+        FLOTANTE f_flotante
+        CADENA f_cadena
+        CARACTER f_caracter
+        BOOLEANO f_booleano
+        ENTERO[] f_vector
+    FIN ESTRUCTURA
+
+    INICIO
+        TiposPrimitivos p
+        SI (p.f_entero == NULO)
+            IMPRIMIR("ENTERO_NULO: VERDADERO")
+        FIN SI
+        SI (p.f_real == NULO)
+            IMPRIMIR("REAL_NULO: VERDADERO")
+        FIN SI
+        SI (p.f_flotante == NULO)
+            IMPRIMIR("FLOTANTE_NULO: VERDADERO")
+        FIN SI
+        SI (p.f_cadena == NULO)
+            IMPRIMIR("CADENA_NULO: VERDADERO")
+        FIN SI
+        SI (p.f_caracter == NULO)
+            IMPRIMIR("CARACTER_NULO: VERDADERO")
+        FIN SI
+        SI (p.f_booleano == NULO)
+            IMPRIMIR("BOOLEANO_NULO: VERDADERO")
+        FIN SI
+        SI (p.f_vector == NULO)
+            IMPRIMIR("VECTOR_NULO: VERDADERO")
+        FIN SI
+    FIN
+    "#;
+
+    let out = run_code(code, false).unwrap();
+    assert!(out.iter().any(|s| s.contains("ENTERO_NULO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("REAL_NULO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("FLOTANTE_NULO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("CADENA_NULO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("CARACTER_NULO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("BOOLEANO_NULO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("VECTOR_NULO: VERDADERO")));
+}
+
+#[test]
+fn test_estructura_anidada_sin_autoinstanciacion() {
+    let code = r#"
+    ESTRUCTURA Direccion:
+        CADENA calle
+        ENTERO numero
+    FIN ESTRUCTURA
+
+    ESTRUCTURA Empresa:
+        CADENA razon_social
+        Direccion sede
+    FIN ESTRUCTURA
+
+    ESTRUCTURA Empleado:
+        CADENA nombre
+        Empresa empleador
+        Direccion domicilio
+    FIN ESTRUCTURA
+
+    INICIO
+        Empleado emp
+        SI (emp.empleador == NULO)
+            IMPRIMIR("EMPLEADOR_NULO: VERDADERO")
+        FIN SI
+        SI (emp.domicilio == NULO)
+            IMPRIMIR("DOMICILIO_NULO: VERDADERO")
+        FIN SI
+        SI (emp.empleador != NULO)
+            IMPRIMIR("ERROR: NO DEBE EJECUTARSE")
+        FIN SI
+    FIN
+    "#;
+
+    let out = run_code(code, false).unwrap();
+    assert!(out.iter().any(|s| s.contains("EMPLEADOR_NULO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("DOMICILIO_NULO: VERDADERO")));
+    assert!(!out.iter().any(|s| s.contains("ERROR: NO DEBE EJECUTARSE")));
+}
+
+#[test]
+fn test_estructura_comparaciones_directas_nulo() {
+    let code = r#"
+    ESTRUCTURA Sensor:
+        ENTERO id
+        REAL lectura
+        CADENA etiqueta
+    FIN ESTRUCTURA
+
+    INICIO
+        Sensor s
+        BOOLEANO es_nulo = (s.id == NULO)
+        BOOLEANO no_es_nulo = (s.id != NULO)
+        IMPRIMIR("ID_ES_NULO: " + es_nulo)
+        IMPRIMIR("ID_NO_ES_NULO: " + no_es_nulo)
+
+        SI (s.lectura == null)
+            IMPRIMIR("LECTURA_NULL: VERDADERO")
+        FIN SI
+        SI (s.etiqueta == None)
+            IMPRIMIR("ETIQUETA_NONE: VERDADERO")
+        FIN SI
+    FIN
+    "#;
+
+    let out = run_code(code, false).unwrap();
+    assert!(out.iter().any(|s| s.contains("ID_ES_NULO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("ID_NO_ES_NULO: FALSO")));
+    assert!(out.iter().any(|s| s.contains("LECTURA_NULL: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("ETIQUETA_NONE: VERDADERO")));
+}
+
+#[test]
+fn test_estructura_comparaciones_cruzadas_con_valores_por_defecto() {
+    let code = r#"
+    ESTRUCTURA CuentaBancaria:
+        ENTERO fondos_entero
+        REAL fondos_real
+        CADENA titular
+        BOOLEANO activa
+    FIN ESTRUCTURA
+
+    INICIO
+        CuentaBancaria c
+        SI (c.fondos_entero == 0)
+            IMPRIMIR("FALLA_ENTERO_CERO")
+        SINO
+            IMPRIMIR("NO_ES_CERO: VERDADERO")
+        FIN SI
+
+        SI (c.fondos_real == 0.0)
+            IMPRIMIR("FALLA_REAL_CERO")
+        SINO
+            IMPRIMIR("NO_ES_REAL_CERO: VERDADERO")
+        FIN SI
+
+        SI (c.titular == "")
+            IMPRIMIR("FALLA_CADENA_VACIA")
+        SINO
+            IMPRIMIR("NO_ES_CADENA_VACIA: VERDADERO")
+        FIN SI
+
+        SI (c.activa == FALSO)
+            IMPRIMIR("FALLA_BOOLEANO_FALSO")
+        SINO
+            IMPRIMIR("NO_ES_BOOLEANO_FALSO: VERDADERO")
+        FIN SI
+    FIN
+    "#;
+
+    let out = run_code(code, false).unwrap();
+    assert!(out.iter().any(|s| s.contains("NO_ES_CERO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("NO_ES_REAL_CERO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("NO_ES_CADENA_VACIA: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("NO_ES_BOOLEANO_FALSO: VERDADERO")));
+    assert!(!out.iter().any(|s| s.contains("FALLA_")));
+}
+
+#[test]
+fn test_estructura_asignacion_posterior_sobre_nulo() {
+    let code = r#"
+    ESTRUCTURA Punto:
+        REAL coord_x
+        REAL coord_y
+    FIN ESTRUCTURA
+
+    ESTRUCTURA Figura:
+        CADENA nombre
+        Punto centro
+    FIN ESTRUCTURA
+
+    INICIO
+        Figura fig
+        IMPRIMIR("NOMBRE_PREVIO: " + (fig.nombre == NULO))
+        IMPRIMIR("CENTRO_PREVIO: " + (fig.centro == NULO))
+
+        fig.nombre = "Circulo"
+        IMPRIMIR("NOMBRE_NUEVO: " + fig.nombre)
+
+        Punto p
+        p.coord_x = 12.5
+        p.coord_y = 25.0
+        fig.centro = p
+
+        IMPRIMIR("CENTRO_ASIGNADO: " + (fig.centro != NULO))
+        IMPRIMIR("PX: " + fig.centro.coord_x)
+        IMPRIMIR("PY: " + fig.centro.coord_y)
+    FIN
+    "#;
+
+    let out = run_code(code, false).unwrap();
+    assert!(out.iter().any(|s| s.contains("NOMBRE_PREVIO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("CENTRO_PREVIO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("NOMBRE_NUEVO: Circulo")));
+    assert!(out.iter().any(|s| s.contains("CENTRO_ASIGNADO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("PX: 12.5")));
+    assert!(out.iter().any(|s| s.contains("PY: 25.0")));
+}
+
+#[test]
+fn test_error_acceso_miembro_en_referencia_nula() {
+    let code = r#"
+    ESTRUCTURA Motor:
+        ENTERO potencia
+    FIN ESTRUCTURA
+
+    ESTRUCTURA Auto:
+        CADENA modelo
+        Motor motor
+    FIN ESTRUCTURA
+
+    INICIO
+        Auto a
+        ENTERO p = a.motor.potencia
+    FIN
+    "#;
+
+    let res = run_code(code, false);
+    assert!(res.is_err());
+    let err = res.unwrap_err().to_string();
+    assert!(err.contains("Intento de acceder al campo 'potencia' en una referencia nula (NULO)"));
+}
+
+#[test]
+fn test_error_asignacion_miembro_en_referencia_nula() {
+    let code = r#"
+    ESTRUCTURA Datos:
+        CADENA descripcion
+    FIN ESTRUCTURA
+
+    ESTRUCTURA Tarea:
+        ENTERO id
+        Datos datos
+    FIN ESTRUCTURA
+
+    INICIO
+        Tarea t
+        t.datos.descripcion = "Proyecto Alpha"
+    FIN
+    "#;
+
+    let res = run_code(code, false);
+    assert!(res.is_err());
+    let err = res.unwrap_err().to_string();
+    assert!(err.contains("Intento de asignar el campo 'descripcion' en una referencia nula (NULO)"));
+}
+
+#[test]
+fn test_estructura_representacion_canonica_con_nulos() {
+    let code = r#"
+    ESTRUCTURA Item:
+        ENTERO id
+        CADENA etiqueta
+        REAL precio
+    FIN ESTRUCTURA
+
+    INICIO
+        Item it
+        IMPRIMIR("CANONICA: " + it)
+        it.id = 42
+        IMPRIMIR("PARCIAL: " + it)
+    FIN
+    "#;
+
+    let out = run_code(code, false).unwrap();
+    assert!(out.iter().any(|s| s.contains("CANONICA: Item{id: NULO, etiqueta: NULO, precio: NULO}")));
+    assert!(out.iter().any(|s| s.contains("PARCIAL: Item{id: 42, etiqueta: NULO, precio: NULO}")));
+}
+
+#[test]
+fn test_estructura_recursiva_arbol_nulo_por_defecto() {
+    let code = r#"
+    ESTRUCTURA NodoArbol:
+        ENTERO valor
+        NodoArbol izq
+        NodoArbol der
+    FIN ESTRUCTURA
+
+    INICIO
+        NodoArbol raiz
+        raiz.valor = 50
+
+        SI (raiz.izq == NULO Y raiz.der == NULO)
+            IMPRIMIR("ARBOL_HOJA: VERDADERO")
+        FIN SI
+
+        NodoArbol hijo_izq
+        hijo_izq.valor = 25
+        raiz.izq = hijo_izq
+
+        SI (raiz.izq != NULO Y raiz.izq.valor == 25)
+            IMPRIMIR("IZQ_VALIDO: VERDADERO")
+        FIN SI
+        SI (raiz.izq.izq == NULO)
+            IMPRIMIR("SUB_IZQ_NULO: VERDADERO")
+        FIN SI
+    FIN
+    "#;
+
+    let out = run_code(code, false).unwrap();
+    assert!(out.iter().any(|s| s.contains("ARBOL_HOJA: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("IZQ_VALIDO: VERDADERO")));
+    assert!(out.iter().any(|s| s.contains("SUB_IZQ_NULO: VERDADERO")));
+}
+
+#[test]
+fn test_vector_de_estructuras_inicializacion_nula() {
+    let code = r#"
+    ESTRUCTURA Casilla:
+        ENTERO numero
+        CADENA ocupante
+    FIN ESTRUCTURA
+
+    INICIO
+        Casilla tablero[2]
+        SI (tablero[0].numero == NULO Y tablero[0].ocupante == NULO)
+            IMPRIMIR("CASILLA_0_NULO: VERDADERO")
+        FIN SI
+        SI (tablero[1].numero == NULO Y tablero[1].ocupante == NULO)
+            IMPRIMIR("CASILLA_1_NULO: VERDADERO")
+        FIN SI
+
+        tablero[0].numero = 1
+        tablero[0].ocupante = "Ficha Roja"
+        IMPRIMIR("CASILLA_0_OCUPADA: " + tablero[0].ocupante)
+        IMPRIMIR("CASILLA_1_LIBRE: " + (tablero[1].ocupante == NULO))
+    FIN
+    "#;
+
+    for out in [
+        run_code(code, false).unwrap(),
+        yaguarete_core::run_code_vm(code, false).unwrap(),
+    ] {
+        assert!(out.iter().any(|s| s.contains("CASILLA_0_NULO: VERDADERO")));
+        assert!(out.iter().any(|s| s.contains("CASILLA_1_NULO: VERDADERO")));
+        assert!(out.iter().any(|s| s.contains("CASILLA_0_OCUPADA: Ficha Roja")));
+        assert!(out.iter().any(|s| s.contains("CASILLA_1_LIBRE: VERDADERO")));
+    }
 }

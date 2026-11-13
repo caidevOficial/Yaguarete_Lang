@@ -2,7 +2,7 @@
   "name": "yaguarete-language-support",
   "displayName": "YAGUARETÉ",
   "description": "Soporte oficial para el lenguaje YAGUARETÉ (.yaguarete): nueva identidad visual Jaguar Gamer & Electric Blue, coloreado de sintaxis, diagnósticos instantáneos con motor nativo Rust, autocompletado y consola interactiva REPL.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "Facu Falcone <a.facundo.falcone@gmail.com>",
   "license": "GPL-3.0-or-later",
   "icon": "icon.png",

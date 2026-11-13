@@ -20,7 +20,7 @@ pub use vm::{run_code_vm, Chunk, Compiler, OpCode, VM};
 use std::fs;
 use std::path::Path;
 
-pub const VERSION: &str = "0.2.0";
+pub const VERSION: &str = "0.2.1";
 
 pub fn run_code(source: &str, lenient: bool) -> Result<Vec<String>, YaguareteError> {
     let mut lexer = Lexer::new(source);

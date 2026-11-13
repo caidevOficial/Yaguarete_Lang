@@ -134,13 +134,7 @@ class StructInstance:
             if fields and f_name in fields:
                 self.fields[f_name] = validate_runtime_value(fields[f_name], f_type)
             else:
-                if isinstance(f_type, StructType) and f_type.name.upper() in parents:
-                    # Campo recursivo: se inicializa en None (referencia/puntero nulo)
-                    self.fields[f_name] = None
-                elif isinstance(f_type, StructType):
-                    self.fields[f_name] = StructInstance(f_type, parent_types=parents)
-                else:
-                    self.fields[f_name] = default_value_for_type(f_type)
+                self.fields[f_name] = None
 
     def get_field(self, name: str) -> Any:
         for f_name, val in self.fields.items():
@@ -256,6 +250,9 @@ def validate_runtime_value(value: Any, expected_type: DataType) -> Any:
     Valida y adapta un valor en tiempo de ejecución para cumplir con el tipo esperado.
     Lanza TypeError si no es compatible.
     """
+    if value is None:
+        return None
+
     if expected_type == TYPE_ANY:
         return value
 

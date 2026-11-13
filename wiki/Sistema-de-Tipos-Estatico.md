@@ -95,7 +95,15 @@ YAGUARETÉ implementa un modelo de compatibilidad controlado en [`eval.rs`](file
 
 ## 🪹 Inicialización y Valores por Defecto
 
-En YAGUARETÉ **las variables nunca contienen basura de memoria**. Cuando se declara una variable sin un valor inicial explícito, el intérprete le asigna automáticamente el valor neutro canónico correspondiente a su tipo:
+En YAGUARETÉ **las variables nunca contienen basura de memoria**, garantizando un entorno de ejecución predecible y seguro. Es fundamental distinguir la regla de inicialización por defecto según el contexto de la variable:
+
+### 1. Variables Escalares Independientes
+Cuando se declara una variable escalar local o global sin inicializador explícito, el entorno le asigna automáticamente el valor neutro canónico correspondiente a su tipo:
+* `ENTERO`: `0`
+* `REAL`: `0.0`
+* `CADENA`: `""`
+* `BOOLEANO`: `FALSO`
+* **Arreglos/Vectores**: se dimensionan inicializando cada elemento con el valor neutro de su tipo base (por ejemplo, enteros en `0`; en vectores de estructuras, cada instancia se crea con todos sus atributos inicializados en `NULO`).
 
 ```yaguarete
 INICIO
@@ -113,3 +121,27 @@ Salida en consola:
 Contador: 0
 Activo: FALSO
 ```
+
+### 2. Atributos de Estructuras (`ESTRUCTURA`) (v0.2.1+)
+A diferencia de las variables escalares independientes, **todos los atributos de cualquier estructura** (`ESTRUCTURA`) —tanto los tipos primitivos (`ENTERO`, `FLOTANTE`, `REAL`, `CADENA`, `CARACTER`, `BOOLEANO`) como las referencias a otras estructuras anidadas o autorreferenciales— **se inicializan automáticamente en `NULO` por defecto** hasta que el programador les asigne un valor explícitamente.
+
+```yaguarete
+ESTRUCTURA Registro:
+    ENTERO id
+    CADENA nombre
+    BOOLEANO confirmado
+FIN ESTRUCTURA
+
+INICIO
+    Registro reg
+    // reg.id, reg.nombre y reg.confirmado inician todos en NULO
+    SI (reg.id == NULO Y reg.nombre == NULO)
+        IMPRIMIR("Los atributos de la estructura se inicializan en NULO por defecto.")
+    FIN SI
+FIN
+```
+
+Esta distinción arquitectónica:
+* **Elimina la auto-instanciación anidada no deseada**: Evita crear objetos hijos recursivos artificiales en memoria que podrían derivar en bucles infinitos o desbordamientos de memoria.
+* **Permite comprobaciones de estado no inicializado**: Facilita evaluar de manera inequívoca si un atributo fue fijado por el usuario o aún no (`campo == NULO` vs. `campo != NULO`), diferenciándolo limpiamente de un valor neutro legítimo (como `0`, `""` o `FALSO`).
+* **Optimiza estructuras dinámicas**: Agiliza la implementación de listas enlazadas, pilas, colas y árboles binarios donde la ausencia de sucesor se representa naturalmente con `NULO`.

@@ -12,7 +12,7 @@ mod updater;
 #[command(
     name = "yaguarete",
     author = "Facu Falcone <a.facundo.falcone@gmail.com>",
-    about = "YAGUARETÉ: Lenguaje de programación de pseudocódigo en español fuertemente tipado (v0.2.0 Native Rust Engine)",
+    about = "YAGUARETÉ: Lenguaje de programación de pseudocódigo en español fuertemente tipado (v0.2.1 Native Rust Engine)",
     long_about = None,
     disable_version_flag = true
 )]

@@ -22,25 +22,38 @@ FIN ESTRUCTURA
 
 ## 📦 Instanciación y Acceso a Campos
 
-Para instanciar una estructura, se declara una variable con el nombre del tipo. Sus campos se inicializan automáticamente en sus valores por defecto (`0`, `0.0`, `""`, `FALSO` o `NULO`):
+Para instanciar una estructura, se declara una variable con el nombre del tipo. A partir de la versión **0.2.1**, **todos los atributos de cualquier estructura** (tanto los tipos primitivos `ENTERO`, `REAL`, `CADENA`, `BOOLEANO` como los tipos `ESTRUCTURA` referenciales) se inicializan automáticamente en `NULO` por defecto hasta que el programador les asigne un valor explícitamente.
+
+Esto asegura un control explícito sobre la memoria y permite verificar directamente si un atributo contiene datos válidos o aún no ha sido cargado:
 
 ```yaguarete
 INICIO
     Libro mi_libro
 
+    // En v0.2.1+, todos los campos inician en NULO
+    SI (mi_libro.titulo == NULO)
+        IMPRIMIR("El título está sin inicializar (es NULO)") // Se evalúa como VERDADERO
+    FIN SI
+
+    // Asignación explícita de valores a sus campos
     mi_libro.titulo = "Ficciones"
     mi_libro.autor = "Jorge Luis Borges"
     mi_libro.anio_publicacion = 1944
     mi_libro.precio = 3500.50
     mi_libro.disponible = VERDADERO
 
-    IMPRIMIR("Libro: " + mi_libro.titulo + " de " + mi_libro.autor)
+    SI (mi_libro.titulo != NULO)
+        IMPRIMIR("Libro: " + mi_libro.titulo + " de " + mi_libro.autor)
+    FIN SI
+
     IMPRIMIR("Ficha completa: " + mi_libro)
 FIN
 ```
 
 Salida al imprimir una estructura completa:
 ```text
+El título está sin inicializar (es NULO)
+Libro: Ficciones de Jorge Luis Borges
 Ficha completa: Libro{titulo: 'Ficciones', autor: 'Jorge Luis Borges', anio_publicacion: 1944, precio: 3500.5, disponible: VERDADERO}
 ```
 
@@ -62,10 +75,11 @@ Esto implica que:
 
 ## 🪹 El Puntero Universal `NULO`
 
-En estructuras dinámicas, `NULO` (también aceptado como `NULL` o `NONE`) representa la ausencia de un nodo o el extremo terminal de una lista:
+En YAGUARETÉ, `NULO` (también aceptado sintácticamente como `NULL` o `NONE`) representa la ausencia de un objeto en memoria, un puntero sin inicializar o el extremo terminal de una estructura enlazada:
 
-* Es el valor de referencia por defecto para campos de tipo autorreferencial.
-* Puede compararse explícitamente mediante `== NULO` o `!= NULO`.
+* **Valor por Defecto Universal en Estructuras (v0.2.1+)**: A partir de la versión 0.2.1, `NULO` es el valor de inicialización predeterminado para **todos los atributos** de cualquier estructura (tanto primitivos como referencias a otras estructuras). Esto elimina por completo la auto-instanciación automática de sub-estructuras anidadas no solicitadas y previene recursiones infinitas o desbordamientos de memoria al manipular estructuras dinámicas complejas.
+* **Comprobación Condicional Segura**: Puede compararse de forma directa y segura mediante los operadores de igualdad `== NULO` y desigualdad `!= NULO`, evaluando certeramente el estado de inicialización de cualquier atributo o nodo.
+* **Terminador Canónico**: Funciona como marcador canónico de fin de estructura dinámica (en listas enlazadas, pilas, colas y árboles).
 
 ```yaguarete
 ESTRUCTURA Nodo:
@@ -75,6 +89,11 @@ FIN ESTRUCTURA
 
 INICIO
     Nodo cabeza
+    // En v0.2.1+, cabeza.valor y cabeza.siguiente inician automáticamente en NULO
+    SI (cabeza.siguiente == NULO)
+        IMPRIMIR("cabeza.siguiente es NULO por defecto sin auto-instanciación")
+    FIN SI
+
     cabeza.valor = "Primer elemento"
     cabeza.siguiente = NULO // Marcador explícito de fin de lista
 

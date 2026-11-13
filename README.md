@@ -10,10 +10,10 @@
 
 <p align="center">
   <a href="#-autoría-y-créditos"><img src="https://img.shields.io/badge/Autor-%3CFacu%20Falcone%3E-0f172a?style=for-the-badge" alt="Autor" /></a>
-  <img src="https://img.shields.io/badge/Versi%C3%B3n-0.2.0-0066ff?style=for-the-badge" alt="Versión" />
+  <img src="https://img.shields.io/badge/Versi%C3%B3n-0.2.1-0066ff?style=for-the-badge" alt="Versión" />
   <img src="https://img.shields.io/badge/Extensi%C3%B3n-.yaguarete-38bdf8?style=for-the-badge" alt="Extensión .yaguarete" />
   <img src="https://img.shields.io/badge/VS_Code-Extensi%C3%B3n_Oficial-1e3a8a?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="VS Code Extension" />
-  <img src="https://img.shields.io/badge/Tests-107%20passing-22c55e?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-366%20passing-22c55e?style=for-the-badge" alt="Tests" />
   <img src="https://img.shields.io/badge/Licencia-GPL--3.0-2563eb?style=for-the-badge" alt="Licencia GPL-3.0" />
 </p>
 
@@ -65,7 +65,8 @@ Permite escribir algoritmos estructurados con palabras clave naturales en españ
 ## ✨ Características Principales
 
 - 🛡️ **Fuertemente Tipado:** Validación estática de variables, firmas de funciones, aridad y tipos de retorno.
-- 🚀 **Motor Nativo y Máquina Virtual Bytecode en Rust (v0.2.0):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad con nuevo motor de Bytecode VM (hasta 5.7x más rápido en algoritmos intensivos: Selection Sort 10k en 6.9s frente a 39.5s originales) y selección de motor vía `--engine <vm|ast>`.
+- 🚀 **Motor Nativo y Máquina Virtual Bytecode en Rust (v0.2.0+):** Compilado nativo con arranque instantáneo (<1 ms), ejecución de ultra-alta velocidad con motor de Bytecode VM (hasta 5.7x más rápido en algoritmos intensivos: Selection Sort 10k en 6.9s frente a 39.5s originales) y selección de motor vía `--engine <vm|ast>`.
+- 🪹 **Inicialización en `NULO` por Defecto en Estructuras (v0.2.1):** Todos los atributos de cualquier `ESTRUCTURA` (primitivos y referencias a estructuras) inician en `NULO` hasta recibir una asignación explícita, evitando auto-instanciación recursiva indeseada en listas, colas, pilas y árboles.
 - ⚡ **Evaluación en Cortocircuito (v0.1.2+):** Operadores lógicos `Y` y `O` con evaluación en cortocircuito (*short-circuit evaluation*), permitiendo guardas seguras en bucles y estructuras sin evaluaciones innecesarias ni desbordamientos de índice.
 - 💻 **Consola Interactiva REPL:** Nuevo entorno interactivo `yaguarete repl` para evaluar expresiones y algoritmos didácticos al vuelo con tabla de variables (`:vars`) y balanceo multilínea.
 - 📐 **Precisión Numérica Determinística:** Distinción clara entre `FLOTANTE` (IEEE 754 de 32 bits) y `REAL` (IEEE 754 de 64 bits de doble precisión).
@@ -109,10 +110,10 @@ YAGUARETÉ ofrece paquetes oficiales nativos y universales para entornos Linux:
 Recomendado para **Ubuntu, Debian, Linux Mint, Pop!_OS, Kali Linux** y derivados:
 ```bash
 # Instalación con apt (resuelve dependencias automáticamente)
-sudo apt install ./yaguarete_0.2.0_amd64.deb
+sudo apt install ./yaguarete_0.2.1_amd64.deb
 
 # O mediante dpkg:
-# sudo dpkg -i yaguarete_0.2.0_amd64.deb
+# sudo dpkg -i yaguarete_0.2.1_amd64.deb
 ```
 Este paquete instala el binario en `/usr/bin/yaguarete`, registra la asociación MIME del archivo `.yaguarete`, el icono del lenguaje y la entrada de escritorio para aplicaciones del sistema.
 
@@ -120,8 +121,8 @@ Este paquete instala el binario en `/usr/bin/yaguarete`, registra la asociación
 Compatible con cualquier distribución (Arch Linux, Fedora, openSUSE, Gentoo, Alpine, etc.):
 ```bash
 # Descomprimir el paquete
-tar -xzf yaguarete-0.2.0-linux-x86_64.tar.gz
-cd yaguarete-0.2.0-linux-x86_64
+tar -xzf yaguarete-0.2.1-linux-x86_64.tar.gz
+cd yaguarete-0.2.1-linux-x86_64
 
 # Instalación para el usuario actual (~/.local/bin):
 chmod +x install.sh
@@ -305,7 +306,7 @@ yaguarete tokens mi_algoritmo.yaguarete
 
 ## 🎨 Extensión Oficial para Visual Studio Code
 
-El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` (disponible como paquete `yaguarete-language-support-0.2.0.vsix`):
+El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` (disponible como paquete `yaguarete-language-support-0.2.1.vsix`):
 
 <p align="center">
   <img src="yaguarete_icon.png" width="80" alt="VS Code Extension" />
@@ -329,7 +330,7 @@ El repositorio incluye la extensión oficial empaquetada en `extension-vscode/` 
 
 #### Instalación Manual de la Extensión:
 ```bash
-code --install-extension extension-vscode/yaguarete-language-support-0.2.0.vsix --force
+code --install-extension extension-vscode/yaguarete-language-support-0.2.1.vsix --force
 ```
 
 ---
@@ -458,8 +459,9 @@ FIN ESTRUCTURA
 ```
 
 > [!NOTE]
-> **Gestión Segura de Memoria y Recursión:**
-> Al instanciar una estructura autorreferencial, YAGUARETÉ inicializa automáticamente los campos recursivos con valor `NULO`, garantizando que no ocurran ciclos infinitos ni desbordamientos de memoria en la instanciación.
+> **Inicialización en NULO por Defecto y Control Explícito de Memoria (v0.2.1+):**
+> A partir de la versión 0.2.1, al instanciar cualquier estructura (`ESTRUCTURA`), **todos sus atributos** (tanto tipos primitivos como tipos estructura) se inicializan automáticamente en `NULO` por defecto hasta que el programador les asigne un valor explícitamente.
+> Esto previene la auto-instanciación automática de objetos anidados no deseados, garantizando un control explícito sobre la memoria y eliminando recursiones infinitas. Asimismo, permite realizar comprobaciones directas de igualdad y desigualdad (`== NULO` y `!= NULO`) sobre atributos sin inicializar con total seguridad y precisión.
 
 #### 2. Creación, Anidamiento de Nodos y Recorrido
 En este ejemplo canónico ([ejemplo.yaguarete](file:///e:/Python_d/Yaguarete_Lang/ejemplo.yaguarete)), se crean 5 nodos secuenciales enlazados en memoria y se recorren mediante un puntero auxiliar:
@@ -879,11 +881,14 @@ FIN
 
 ## 🧪 Pruebas Automatizadas
 
-La suite de pruebas unitarias evalúa exhaustivamente el lexer, parser, verificador de tipos y runtime:
+La suite de pruebas unitarias e integración evalúa exhaustivamente el lexer, parser, verificador de tipos, máquina virtual bytecode, evaluador AST, CLI, DAP y la paridad del prototipo en Python (**366 pruebas en total**: 271 en el workspace Rust + 95 en Python):
 
 ```bash
-# Ejecutar toda la batería de tests unitarios
-python -m unittest discover tests
+# Ejecutar la suite completa del workspace en Rust (271 tests)
+cargo test --workspace
+
+# Ejecutar toda la batería de tests unitarios en Python (95 tests)
+python -m unittest discover -s tests -v
 ```
 
 **Cobertura de pruebas:**

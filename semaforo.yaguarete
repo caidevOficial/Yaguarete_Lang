@@ -1,0 +1,85 @@
+INICIO
+
+    ESTRUCTURA AUTO:
+        ENTERO numero_auto
+        AUTO proximo_auto
+    FIN ESTRUCTURA
+
+    ESTRUCTURA AVENIDA:
+        CADENA semaforo
+        AUTO primer_auto
+        AUTO ultimo_auto
+    FIN ESTRUCTURA
+
+    FUNCION cantidad_autos_avenida(avenida: AVENIDA): ENTERO
+        ENTERO contador = 0
+        AUTO aux
+        aux.proximo_auto = avenida.primer_auto
+
+        MIENTRAS(aux.proximo_auto != NULO)
+            aux = aux.proximo_auto
+            contador++
+        FIN MIENTRAS
+        RETORNAR contador
+    FIN FUNCION
+
+    FUNCION agregar_a_cola(lista: AVENIDA, nuevo_auto: AUTO)
+        // Paso 1: Validación defensiva contra referencias nulas
+        SI (nuevo_auto == NULO)
+            RETORNAR
+        FIN SI
+
+        // Paso 2: Asegurar que el nuevo nodo sea terminal (no apunte a nada posterior)
+        nuevo_auto.proximo_auto = NULO
+
+        // Paso 3: Evaluar si la cola ya posee elementos o está vacía
+        SI (lista.ultimo_auto != NULO)
+            // Caso 3a: El nodo que estaba al final ahora apunta al nuevo nodo como su próximo
+            lista.ultimo_auto.proximo_auto = nuevo_auto
+            
+            // Caso 3b: Se actualiza el final de la lista para que sea el nuevo nodo
+            lista.ultimo_auto = nuevo_auto
+        SINO
+            // Caso 4: Al ser el primer elemento en ingresar, es a la vez el frente y el final
+            lista.primer_auto = nuevo_auto
+            lista.ultimo_auto = nuevo_auto
+        FIN SI
+        IMPRIMIR("Auto agregado: " + nuevo_auto)
+        IMPRIMIR("Estado lista: " + lista)
+    FIN FUNCION
+
+    // pruebas
+    AUTO vector_autos[10]
+
+    PARA(ENTERO numero = 1; numero < 11; numero++)
+        AUTO nuevo_auto
+        nuevo_auto.numero_auto = numero
+        nuevo_auto.proximo_auto = NULO
+        vector_autos[numero - 1] = nuevo_auto
+        
+    FIN PARA
+    
+    AVENIDA calle_1
+    
+    calle_1.semaforo = "rojo"
+    AVENIDA calle_2
+    
+    calle_2.semaforo = "verde"
+
+    
+
+    // IMPRIMIR(vector_autos)
+    
+    PARA(ENTERO indice_auto = 0; indice_auto < 3; indice_auto++)
+        SI((calle_1.semaforo == "rojo" Y cantidad_autos_avenida(calle_1) < 3))
+            SI(calle_1.primer_auto == NULO)
+                calle_1.primer_auto = vector_autos[indice_auto]
+                calle_1.ultimo_auto = vector_autos[indice_auto]
+            SINO
+                agregar_a_cola(calle_1, vector_autos[indice_auto])
+            FIN SI
+        FIN SI
+    FIN PARA
+
+    
+FIN

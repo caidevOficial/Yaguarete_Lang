@@ -490,31 +490,11 @@ impl Interpreter {
         }
     }
 
-    fn instantiate_struct(&self, name: &str, parents: &mut std::collections::HashSet<String>) -> Value {
+    fn instantiate_struct(&self, name: &str, _parents: &mut std::collections::HashSet<String>) -> Value {
         if let Some(def) = self.struct_defs.get(&name.to_uppercase()) {
             let mut fields = HashMap::new();
-            let mut new_parents = parents.clone();
-            new_parents.insert(name.to_uppercase());
-
-            for (f_name, f_type) in &def.fields {
-                let field_val = match f_type {
-                    DataType::Estructura(child_struct) => {
-                        if new_parents.contains(&child_struct.to_uppercase()) {
-                            Value::Nulo
-                        } else {
-                            self.instantiate_struct(child_struct, &mut new_parents)
-                        }
-                    }
-                    DataType::Entero => Value::Entero(0),
-                    DataType::Real => Value::Real(0.0),
-                    DataType::Flotante => Value::Flotante(0.0),
-                    DataType::Cadena => Value::Cadena(String::new()),
-                    DataType::Caracter => Value::Caracter(' '),
-                    DataType::Booleano => Value::Booleano(false),
-                    DataType::Vector(_) => Value::Vector(Vec::new()),
-                    _ => Value::Nulo,
-                };
-                fields.insert(f_name.clone(), field_val);
+            for (f_name, _) in &def.fields {
+                fields.insert(f_name.clone(), Value::Nulo);
             }
 
             Value::Struct(std::rc::Rc::new(std::cell::RefCell::new(crate::value::StructInstance {

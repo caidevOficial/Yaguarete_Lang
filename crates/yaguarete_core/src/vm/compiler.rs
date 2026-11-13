@@ -212,6 +212,14 @@ impl Compiler {
         self.emit_u16(offset);
     }
 
+    fn struct_elem_name(dt: &DataType) -> Option<&str> {
+        match dt {
+            DataType::Estructura(name) => Some(name.as_str()),
+            DataType::Vector(inner) | DataType::Matriz(inner) => Self::struct_elem_name(inner),
+            _ => None,
+        }
+    }
+
     fn compile_statement(&mut self, stmt: &Statement) -> Result<(), YaguareteError> {
         match stmt {
             Statement::Located { line, column, stmt } => {
@@ -239,11 +247,18 @@ impl Compiler {
                         self.compile_expression(s)?;
                     }
                     if size_exprs.len() == 1 {
-                        // Construye vector unidimensional con 0s por defecto
-                        let _count_idx = self.chunk.add_constant(Value::Entero(size_exprs.len() as i64));
-                        self.emit_opcode(OpCode::Builtin);
-                        self.emit_byte(255); // Marcador para vector con tamaño dinámico
-                        self.emit_byte(1);
+                        // Construye vector unidimensional con valores por defecto (estructuras o 0s)
+                        if let Some(struct_name) = Self::struct_elem_name(var_type) {
+                            self.emit_constant(Value::Cadena(struct_name.to_string()));
+                            self.emit_opcode(OpCode::Builtin);
+                            self.emit_byte(255); // Marcador para vector con tamaño dinámico
+                            self.emit_byte(2);
+                        } else {
+                            let _count_idx = self.chunk.add_constant(Value::Entero(size_exprs.len() as i64));
+                            self.emit_opcode(OpCode::Builtin);
+                            self.emit_byte(255); // Marcador para vector con tamaño dinámico
+                            self.emit_byte(1);
+                        }
                     } else {
                         // Matriz
                         self.emit_opcode(OpCode::Builtin);

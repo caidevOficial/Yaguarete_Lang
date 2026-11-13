@@ -10,7 +10,7 @@ fn test_cli_version() {
 
         assert!(output.status.success());
         let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(stdout.contains("YAGUARETÉ (v0.2.0)"), "Flag {} failed banner version check", flag);
+        assert!(stdout.contains("YAGUARETÉ (v0.2.1)"), "Flag {} failed banner version check", flag);
         assert!(stdout.contains("Hello from the YAGUARETÉ community. [Dev: Facu Falcone]"), "Flag {} failed dev check", flag);
     }
 }
@@ -197,5 +197,77 @@ fn test_cli_default_launches_repl_on_empty_args() {
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("=> 42"));
+}
+
+#[test]
+fn test_cli_run_colas_yaguarete_default_vm() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+    let file = root.join("colas.yaguarete");
+    let output = Command::new(env!("CARGO_BIN_EXE_yaguarete"))
+        .args(["run", file.to_str().unwrap()])
+        .output()
+        .expect("Failed to execute yaguarete run colas.yaguarete");
+
+    assert!(output.status.success(), "colas.yaguarete failed: {}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Agregado: NodoCliente{nombre: 1, proximo_cliente: NULO}"));
+    assert!(stdout.contains("Agregado: NodoCliente{nombre: 4, proximo_cliente: NULO}"));
+    assert!(stdout.contains("Elemento eliminado: NodoCliente{nombre: 1, proximo_cliente: NULO}"));
+    assert!(stdout.contains("Ultimo de la cola: NodoCliente{nombre: 4, proximo_cliente: NULO}"));
+    assert!(stdout.contains("============= INFO COLA ============="));
+    assert!(stdout.contains("============= FIN INFO COLA ============="));
+}
+
+#[test]
+fn test_cli_run_colas_yaguarete_ast() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+    let file = root.join("colas.yaguarete");
+    let output = Command::new(env!("CARGO_BIN_EXE_yaguarete"))
+        .args(["run", file.to_str().unwrap(), "--engine", "ast"])
+        .output()
+        .expect("Failed to execute yaguarete run colas.yaguarete --engine ast");
+
+    assert!(output.status.success(), "colas.yaguarete on AST engine failed: {}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Agregado: NodoCliente{nombre: 1, proximo_cliente: NULO}"));
+    assert!(stdout.contains("Agregado: NodoCliente{nombre: 4, proximo_cliente: NULO}"));
+    assert!(stdout.contains("Elemento eliminado: NodoCliente{nombre: 1, proximo_cliente: NULO}"));
+    assert!(stdout.contains("Ultimo de la cola: NodoCliente{nombre: 4, proximo_cliente: NULO}"));
+    assert!(stdout.contains("============= INFO COLA ============="));
+    assert!(stdout.contains("============= FIN INFO COLA ============="));
+}
+
+#[test]
+fn test_cli_run_semaforo_yaguarete_default_vm() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+    let file = root.join("semaforo.yaguarete");
+    let output = Command::new(env!("CARGO_BIN_EXE_yaguarete"))
+        .args(["run", file.to_str().unwrap()])
+        .output()
+        .expect("Failed to execute yaguarete run semaforo.yaguarete");
+
+    assert!(output.status.success(), "semaforo.yaguarete failed: {}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Auto agregado: AUTO{numero_auto: 2, proximo_auto: NULO}"));
+    assert!(stdout.contains("Auto agregado: AUTO{numero_auto: 3, proximo_auto: NULO}"));
+    assert!(stdout.contains("Estado lista: AVENIDA{semaforo: 'rojo', primer_auto: AUTO{numero_auto: 1, proximo_auto: AUTO{numero_auto: 2, proximo_auto: NULO}}"));
+    assert!(stdout.contains("Estado lista: AVENIDA{semaforo: 'rojo', primer_auto: AUTO{numero_auto: 1, proximo_auto: AUTO{numero_auto: 2, proximo_auto: AUTO{numero_auto: 3, proximo_auto: NULO}}}"));
+}
+
+#[test]
+fn test_cli_run_semaforo_yaguarete_ast() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().parent().unwrap();
+    let file = root.join("semaforo.yaguarete");
+    let output = Command::new(env!("CARGO_BIN_EXE_yaguarete"))
+        .args(["run", file.to_str().unwrap(), "--engine", "ast"])
+        .output()
+        .expect("Failed to execute yaguarete run semaforo.yaguarete --engine ast");
+
+    assert!(output.status.success(), "semaforo.yaguarete on AST engine failed: {}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Auto agregado: AUTO{numero_auto: 2, proximo_auto: NULO}"));
+    assert!(stdout.contains("Auto agregado: AUTO{numero_auto: 3, proximo_auto: NULO}"));
+    assert!(stdout.contains("Estado lista: AVENIDA{semaforo: 'rojo', primer_auto: AUTO{numero_auto: 1, proximo_auto: AUTO{numero_auto: 2, proximo_auto: NULO}}"));
+    assert!(stdout.contains("Estado lista: AVENIDA{semaforo: 'rojo', primer_auto: AUTO{numero_auto: 1, proximo_auto: AUTO{numero_auto: 2, proximo_auto: AUTO{numero_auto: 3, proximo_auto: NULO}}}"));
 }
 

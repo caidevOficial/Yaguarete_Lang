@@ -7,8 +7,8 @@ fn main() {
         res.set("ProductName", "YAGUARETÉ");
         res.set("FileDescription", "YAGUARETÉ: Lenguaje de programación de pseudocódigo en español fuertemente tipado (Rust Engine)");
         res.set("LegalCopyright", "Copyright (c) 2026 Facu Falcone");
-        res.set("FileVersion", "0.2.0.0");
-        res.set("ProductVersion", "0.2.0.0");
+        res.set("FileVersion", "0.2.1.0");
+        res.set("ProductVersion", "0.2.1.0");
         if let Err(e) = res.compile() {
             eprintln!("Cargo build warning: could not compile Windows resource: {}", e);
         }

@@ -130,6 +130,34 @@ impl VM {
         }
     }
 
+    fn instantiate_null_struct(&self, struct_name: &str) -> Value {
+        let mut fields = std::collections::HashMap::new();
+        let mut field_order = Vec::new();
+        let found = self
+            .struct_defs
+            .get_key_value(struct_name)
+            .or_else(|| {
+                self.struct_defs
+                    .iter()
+                    .find(|(k, _)| k.eq_ignore_ascii_case(struct_name))
+            });
+        let canonical_name = if let Some((canon, field_defs)) = found {
+            for (f_name, _) in field_defs {
+                field_order.push(f_name.clone());
+                fields.insert(f_name.clone(), Value::Nulo);
+            }
+            canon.clone()
+        } else {
+            struct_name.to_string()
+        };
+        let inst = crate::value::StructInstance {
+            struct_name: canonical_name,
+            fields,
+            field_order,
+        };
+        Value::Struct(std::rc::Rc::new(std::cell::RefCell::new(inst)))
+    }
+
     fn execute(&mut self) -> Result<Value, YaguareteError> {
         loop {
             let frame_idx = self.frames.len() - 1;
@@ -729,6 +757,7 @@ impl VM {
                                 return Err(self.runtime_error(format!("La estructura '{}' no tiene el campo '{}'", b.struct_name, member)));
                             }
                         }
+                        Value::Nulo => return Err(self.runtime_error(format!("Intento de acceder al campo '{}' en una referencia nula (NULO)", member))),
                         _ => return Err(self.runtime_error("Acceso a miembro sobre elemento no estructura")),
                     }
                 }
@@ -744,9 +773,14 @@ impl VM {
                     match target {
                         Value::Struct(s) => {
                             let mut b = s.borrow_mut();
-                            let key = b.fields.keys().find(|k| k.eq_ignore_ascii_case(member)).cloned().unwrap_or_else(|| member.to_string());
-                            b.fields.insert(key, val);
+                            let found_key = b.fields.keys().find(|k| k.eq_ignore_ascii_case(member)).cloned();
+                            if let Some(key) = found_key {
+                                b.fields.insert(key, val);
+                            } else {
+                                return Err(self.runtime_error(format!("La estructura '{}' no tiene el campo '{}'", b.struct_name, member)));
+                            }
                         }
+                        Value::Nulo => return Err(self.runtime_error(format!("Intento de asignar el campo '{}' en una referencia nula (NULO)", member))),
                         _ => return Err(self.runtime_error("Asignación a miembro sobre elemento no estructura")),
                     }
                 }
@@ -754,32 +788,11 @@ impl VM {
                     let idx = chunk.read_u16(self.frames[frame_idx].ip) as usize;
                     self.frames[frame_idx].ip += 2;
                     let struct_name = match &chunk.constants[idx] {
-                        Value::Cadena(s) => s.clone(),
-                        _ => String::new(),
+                        Value::Cadena(s) => s.as_str(),
+                        _ => "",
                     };
-                    let mut fields = std::collections::HashMap::new();
-                    let mut field_order = Vec::new();
-                    if let Some(field_defs) = self.struct_defs.get(&struct_name) {
-                        for (f_name, f_type) in field_defs {
-                            let def_val = match f_type {
-                                crate::ast::DataType::Entero => Value::Entero(0),
-                                crate::ast::DataType::Real => Value::Real(0.0),
-                                crate::ast::DataType::Flotante => Value::Flotante(0.0),
-                                crate::ast::DataType::Booleano => Value::Booleano(false),
-                                crate::ast::DataType::Cadena => Value::Cadena(String::new()),
-                                crate::ast::DataType::Caracter => Value::Caracter('\0'),
-                                _ => Value::Nulo,
-                            };
-                            field_order.push(f_name.clone());
-                            fields.insert(f_name.clone(), def_val);
-                        }
-                    }
-                    let inst = crate::value::StructInstance {
-                        struct_name,
-                        fields,
-                        field_order,
-                    };
-                    self.stack.push(Value::Struct(std::rc::Rc::new(std::cell::RefCell::new(inst))));
+                    let inst = self.instantiate_null_struct(struct_name);
+                    self.stack.push(inst);
                 }
                 OpCode::Print => {
                     let argc = chunk.code[self.frames[frame_idx].ip] as usize;
@@ -1072,15 +1085,27 @@ impl VM {
                 let handle = crate::value::ArchivoHandle::new(&path, &mode).map_err(|e| self.runtime_error(e.to_string()))?;
                 self.stack.push(Value::Archivo(std::rc::Rc::new(std::cell::RefCell::new(handle))));
             }
-            // Marcador especial 255: Crear vector dinámico de tamaño n con 0s
+            // Marcador especial 255: Crear vector dinámico de tamaño n (con estructuras NULO o 0s)
             255 => {
                 let size = match &args[0] {
                     Value::Entero(n) => (*n).max(0) as usize,
                     _ => 0,
                 };
+                let struct_name = if argc >= 2 {
+                    match &args[1] {
+                        Value::Cadena(s) => Some(s.as_str()),
+                        _ => None,
+                    }
+                } else {
+                    None
+                };
                 let mut v = Vec::with_capacity(size);
                 for _ in 0..size {
-                    v.push(Value::Entero(0));
+                    if let Some(s_name) = struct_name {
+                        v.push(self.instantiate_null_struct(s_name));
+                    } else {
+                        v.push(Value::Entero(0));
+                    }
                 }
                 self.stack.push(Value::Vector(v));
             }

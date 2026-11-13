@@ -42,8 +42,8 @@ const YAGUARETE_ICON_BYTES: &[u8] = include_bytes!("../../../yaguarete_icon.ico"
 const YAGUARETE_ICON_PNG_BYTES: &[u8] = include_bytes!("../../../yaguarete_icon.png");
 #[allow(dead_code)]
 const YAGUARETE_LOGO_BYTES: &[u8] = include_bytes!("../../../yaguarete_logo_header.png");
-const VSCODE_VSIX_BYTES: &[u8] = include_bytes!("../../../extension-vscode/yaguarete-language-support-0.2.0.vsix");
-const YAGUARETE_VERSION: &str = "0.2.0";
+const VSCODE_VSIX_BYTES: &[u8] = include_bytes!("../../../extension-vscode/yaguarete-language-support-0.2.1.vsix");
+const YAGUARETE_VERSION: &str = "0.2.1";
 
 fn current_time_str() -> String {
     let dur = std::time::SystemTime::now()
@@ -131,7 +131,7 @@ impl eframe::App for InstallerApp {
             }
         }
 
-        // Configuración de paleta oficial Dark Electric Blue & Jaguar Gamer (YAGUARETÉ 0.2.0)
+        // Configuración de paleta oficial Dark Electric Blue & Jaguar Gamer (YAGUARETÉ 0.2.1)
         let mut visuals = egui::Visuals::dark();
         visuals.panel_fill = Color32::from_rgb(8, 12, 20); // #080c14 base noche espacial
         visuals.window_fill = Color32::from_rgb(8, 12, 20);

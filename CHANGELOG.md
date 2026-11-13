@@ -9,6 +9,23 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ---
 
+## [0.2.1] - 2026-11-13
+
+### 🛠️ Modificado
+- **Semántica de Estructuras (R1)**: Todos los atributos de cualquier estructura (`ESTRUCTURA`) (tanto tipos primitivos como referencias a otras estructuras) se inicializan por defecto en `NULO` hasta que el programador les asigne un valor explícitamente.
+- **Eliminación de Auto-Instanciación Anidada**: Se previene la creación automática de sub-estructuras dummy no solicitadas, eliminando recursiones infinitas y desbordamientos de memoria al manipular estructuras dinámicas complejas.
+- **Comprobación de Nulos Segura**: Soporte y verificación estricta de comparaciones directas (`== NULO` y `!= NULO`) sobre atributos de estructuras sin inicializar, garantizando comportamiento idéntico y seguro tanto en el evaluador AST como en la VM de bytecode.
+
+### 🐛 Corregido
+- **Compatibilidad con `semaforo.yaguarete` (R2)**: Corrección del bucle infinito ocasionado por la auto-instanciación de `primer_auto` y `ultimo_auto` dentro de `AVENIDA`, validando exitosamente el comportamiento de colas vacías y flujo de autos en semáforo.
+- **Manejo de Colas Dinámicas (`colas.yaguarete`)**: Verificación y funcionamiento óptimo del encolado y desencolado de nodos (`NodoCliente`) sin necesidad de inicializaciones defensivas manuales redundantes.
+
+### ⚙️ Infraestructura y Build (R3)
+- **Incremento de Versión a v0.2.1**: Actualización de versión a `0.2.1` en `crates/yaguarete_core`, `crates/yaguarete_cli`, `crates/yaguarete_installer`, `extension-vscode/package.json`, constantes globales de versión, recursos ejecutables de Windows PE y banners del CLI.
+- **Compilación de Binarios Oficiales y Extensión**: Compilación y verificación de ejecutables de producción (`yaguarete.exe`, `Instalador_Yaguarete.exe` con extensión embebida `yaguarete-language-support-0.2.1.vsix`) superando con éxito la suite completa de 366 pruebas automatizadas (271 tests en el workspace Rust con `cargo test --workspace` y 95 tests unitarios en Python con `python -m unittest discover -s tests -v`).
+
+---
+
 ## [0.2.0] - 2026-11-11
 
 ### 🚀 Rendimiento Extremo y Motor de Máquina Virtual (Bytecode VM)

@@ -1,12 +1,59 @@
 # 📜 Historial de Versiones (Changelog Oficial)
 
-Este documento registra la evolución histórica del lenguaje **YAGUARETÉ**, comenzando por la versión oficial estable **0.1.1** y documentando los hitos de maduración y estabilización previos organizados como pre-releases semánticas (SemVer).
+Este documento registra la evolución histórica del lenguaje **YAGUARETÉ**, comenzando por la versión oficial estable más reciente (**0.2.1**) y documentando detalladamente cada versión previa y los hitos de maduración y estabilización organizados como pre-releases semánticas (SemVer).
 
 ---
 
-## 🌟 Versión Estable Oficial
+## 🌟 Versiones Estables Oficiales
 
-### [v0.1.1] - 2026-10-30 (Primer Release Oficial)
+### [v0.2.1] - 2026-11-13 (Inicialización en NULO por Defecto & Estabilidad de Estructuras)
+**Control Explícito de Memoria y Eliminación de Auto-Instanciación Anidada.**
+
+* **Semántica de Estructuras (R1)**:
+  * Todos los atributos de cualquier estructura (`ESTRUCTURA`), tanto tipos primitivos (`ENTERO`, `REAL`, `CADENA`, `BOOLEANO`) como tipos estructura compuestos y referencias, se inicializan automáticamente en `NULO` por defecto hasta que el programador les asigne un valor explícitamente.
+  * **Eliminación de Auto-Instanciación Anidada**: Se previene la creación automática de sub-estructuras dummy recursivas, eliminando ciclos infinitos y desbordamientos de memoria en la instanciación de estructuras dinámicas.
+  * **Comprobación de Nulos Segura**: Soporte completo y uniforme para comprobaciones directas de igualdad y desigualdad (`== NULO` y `!= NULO`) sobre atributos de estructuras sin asignar, funcionando con exactitud tanto en el motor de máquina virtual (`--engine vm`) como en el evaluador AST (`--engine ast`).
+* **Compatibilidad y Verificación (R2)**:
+  * **`semaforo.yaguarete`**: Corrección del ciclo infinito que ocurría en la simulación de tráfico al evaluar `calle_1.primer_auto == NULO`, permitiendo que la verificación de cola vacía opere correctamente y los autos fluyan de manera impecable.
+  * **`colas.yaguarete`**: Validación integral del ciclo de vida FIFO de nodos (`NodoCliente`), garantizando el encolado y desencolado dinámico sin necesidad de asignaciones defensivas manuales.
+  * **Suite de Pruebas**: 366 pruebas automatizadas superadas al 100% (271 en Rust con `cargo test --workspace` y 95 en Python con `python -m unittest discover -s tests -v`).
+* **Infraestructura y Build (R3)**:
+  * Sincronización de versión a `0.2.1` en `yaguarete_core`, `yaguarete_cli`, `yaguarete_installer`, `extension-vscode`, constantes de biblioteca, metadatos PE de Windows y banners de CLI.
+  * Compilación y distribución de binarios oficiales (`yaguarete.exe`, `Instalador_Yaguarete.exe` con `yaguarete-language-support-0.2.1.vsix` embebida).
+
+---
+
+### [v0.2.0] - 2026-11-11 (Máquina Virtual Bytecode & Funciones Incorporadas)
+**Salto Cuántico en Rendimiento y Ampliación de la Biblioteca Estándar.**
+
+* **Motor de Máquina Virtual Bytecode (`yaguarete_core/src/vm/`)**:
+  * Compilador de bytecode (`Compiler`) y VM basada en pila (`VM`) con conjunto de instrucciones compacto (`OpCode`) y pool de constantes (`Chunk`).
+  * Resolución estática de variables locales a slots indexados O(1) en tiempo de compilación.
+  * Saltos directos (`Jump`, `JumpIfFalse`, `Loop`), marcos de llamada aislados (`CallFrame`), recursión y estructuras autorreferenciales.
+  * Modificación in-situ de vectores sin clonado (`SetIndexLocal`, `SetIndexGlobal`, etc.).
+  * Selección de motor CLI vía `--engine <vm|ast>` (activado `vm` por defecto).
+  * Aceleración de hasta 5.72x en benchmarks intensivos (Selection Sort 10k en 6.9s frente a 39.5s).
+* **Optimizaciones en Intérprete AST (`eval.rs`)**:
+  * `FxHashMap` en tablas de símbolos, pool de ámbitos (`scope_pool`) y atajos para `+=`, `-=`, `++`, `--`.
+* **Nuevas Funciones Built-in del Lenguaje**:
+  * Operador de potencia `^` y función `POTENCIA(base, exponente)`.
+  * Matemáticas: `RAIZCUADRADA`, `ABS`, `ALEATORIO`, `MIN`, `MAX`, `REDONDEAR`, constante `PI`.
+  * Entrada: `LEER()` / `LEER(mensaje)` con detección automática de tipo.
+  * Cadenas: `MAYUSCULAS`, `MINUSCULAS`, `RECORTAR`, `DIVIDIR_CADENA`.
+  * Conversión de tipos: `A_ENTERO`, `A_REAL`, `A_FLOTANTE`, `A_CADENA`, `A_BOOLEANO`.
+* **Ecosistema y Herramientas**:
+  * Extensión VS Code: ayuda de firma (*signature help*), autocompletado y sintaxis TextMate enriquecida.
+
+---
+
+### [v0.1.2] - 2026-11-05 (Evaluación en Cortocircuito Lógico)
+* **Evaluación en Cortocircuito (*Short-Circuit Evaluation*)**:
+  * Implementación para operadores booleanos `Y` y `O` en el evaluador de expresiones binarias (`eval.rs`), permitiendo guardas de seguridad contra desbordamientos y divisiones por cero.
+* **Sincronización de Versión**: Sincronización general a `0.1.2` en todos los crates de Rust y metadatos de recursos.
+
+---
+
+### [v0.1.1] - 2026-10-30 (Primer Release Oficial: Identidad "Jaguar Gamer" & Electric Blue)
 **Primer Release Oficial de YAGUARETÉ: Identidad "Jaguar Gamer" & Electric Blue.**
 
 * **Rebranding Integral**: Transformación completa del lenguaje hacia la identidad oficial **YAGUARETÉ** con paleta *Electric Blue* (`#00D4FF`), negro profundo y acentos de color gamer.
